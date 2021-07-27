@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">Crossword Helper</string>
+    <string name="input_box">Wpisz szukany wyraz</string>
+    <string name="input_query">Szukaj</string>
 </resources>
