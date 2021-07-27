@@ -1,0 +1,22 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <item
+        android:id="@+id/favorite"
+        android:title="jeden"
+        android:contentDescription="xd"
+        app:showAsAction="ifRoom" />
+
+    <item
+        android:id="@+id/search"
+        android:title="dwa"
+        android:contentDescription="xd"
+        app:showAsAction="ifRoom" />
+
+    <item
+        android:id="@+id/more"
+        android:title="trzy"
+        android:contentDescription="xd"
+        app:showAsAction="never" />
+
+</menu>
