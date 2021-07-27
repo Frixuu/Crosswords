@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Crossword Helper</string>
+    <string name="input_box">Wpisz szukany wyraz bądź jego część</string>
+    <string name="input_query">Szukaj</string>
+</resources>
