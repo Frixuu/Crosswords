@@ -4,6 +4,7 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
 import com.google.android.material.tabs.TabLayout
+import xyz.lukasz.xword.dictionaries.Dictionary
 
 class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -25,5 +26,8 @@ class MainActivity : AppCompatActivity() {
                 Log.i("MA", "tab unselected: ${tab?.text}")
             }
         })
+
+        val dictionary = Dictionary.loadFromAsset(this, "dictionaries/pl_PL/words.txt")
+        Dictionary.current = dictionary
     }
 }
