@@ -117,7 +117,11 @@ class Dictionary {
             }
 
             parsingJobs.joinAll()
+            fileChannel.close()
+            desc.close()
+
             val afterJoin = Instant.now()
+
             dict.forwardIndex.collectLocks(2)
             val afterUnlock = Instant.now()
             Log.i("Dictionary", "Collecting spinlocks \"$filename\" took ${afterUnlock.millis - afterJoin.millis}ms")

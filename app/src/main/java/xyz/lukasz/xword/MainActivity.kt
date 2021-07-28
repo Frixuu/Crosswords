@@ -12,9 +12,16 @@ import org.joda.time.Instant
 import xyz.lukasz.xword.dictionaries.Dictionary
 
 class MainActivity : AppCompatActivity() {
+
+    external fun fooFromNative(): Int
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+
+        val view = findViewById<View>(R.id.main_layout)
+        Snackbar.make(view, "Native says: ${fooFromNative()}!", Snackbar.LENGTH_LONG).show()
+
         val tabLayout: TabLayout = findViewById(R.id.tabLayout)
         tabLayout.addOnTabSelectedListener(object : TabLayout.OnTabSelectedListener {
 
@@ -27,7 +34,6 @@ class MainActivity : AppCompatActivity() {
                     val dictionary = Dictionary.loadFromAsset(this@MainActivity, "dictionaries/pl_PL/words.txt")
                     Dictionary.current = dictionary
                     val after = Instant.now()
-                    val view = findViewById<View>(R.id.main_layout)
                     Snackbar.make(view, "Loading dictionary took ${after.millis - before.millis}ms", Snackbar.LENGTH_LONG).show()
                 }
             }
@@ -40,5 +46,11 @@ class MainActivity : AppCompatActivity() {
                 Log.i("MA", "tab unselected: ${tab?.text}")
             }
         })
+    }
+
+    companion object {
+        init {
+            System.loadLibrary("native-lib")
+        }
     }
 }
