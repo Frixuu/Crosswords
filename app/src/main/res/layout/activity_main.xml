@@ -40,6 +40,7 @@
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toTopOf="parent"
                     app:placeholderText="@string/input_box"
+                    app:placeholderTextAppearance="@style/TextAppearance.AppCompat.Small"
                     app:startIconContentDescription="@string/input_query"
                     app:startIconDrawable="@android:drawable/ic_menu_search">
 
