@@ -44,10 +44,24 @@ Java_xyz_lukasz_xword_dictionaries_Dictionary_loadNative(JNIEnv *env,
 }
 
 extern "C"
-JNIEXPORT jboolean JNICALL
-Java_xyz_lukasz_xword_dictionaries_Dictionary_findNative(JNIEnv *env,
-                                                         jobject thiz,
-                                                         jlong native_ptr,
-                                                         jstring word) {
-    return false;
+JNIEXPORT jobjectArray JNICALL
+Java_xyz_lukasz_xword_dictionaries_Dictionary_findPartialNative(JNIEnv *env,
+                                                                jobject thiz,
+                                                                jlong native_ptr,
+                                                                jstring jword) {
+
+    jobjectArray results;
+    auto word = env->GetStringUTFChars(jword, 0);
+    Dictionary* dictionary = reinterpret_cast<Dictionary*>(native_ptr);
+    std::vector<std::string> resultVec;
+    dictionary->find_word(resultVec, word);
+    results = (jobjectArray)env->NewObjectArray(
+            resultVec.size(),
+            env->FindClass("java/lang/String"),
+            env->NewStringUTF(""));
+    for (int i = 0; i < resultVec.size(); i++) {
+        env->SetObjectArrayElement(results, i, env->NewStringUTF(resultVec.at(i).c_str()));
+    }
+    env->ReleaseStringUTFChars(jword, word);
+    return results;
 }

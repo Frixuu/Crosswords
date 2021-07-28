@@ -1,16 +1,18 @@
 package xyz.lukasz.xword
 
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
 import android.view.View
+import androidx.appcompat.app.AppCompatActivity
+import androidx.recyclerview.widget.DefaultItemAnimator
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.snackbar.Snackbar
 import com.google.android.material.tabs.TabLayout
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import org.joda.time.Instant
 import xyz.lukasz.xword.dictionaries.Dictionary
-import xyz.lukasz.xword.dictionaries.DictionaryJVM
 
 class MainActivity : AppCompatActivity() {
 
@@ -22,6 +24,12 @@ class MainActivity : AppCompatActivity() {
 
         val view = findViewById<View>(R.id.main_layout)
         Snackbar.make(view, "Native says: ${fooFromNative()}!", Snackbar.LENGTH_LONG).show()
+
+        val recyclerView = findViewById<RecyclerView>(R.id.recycler_view).apply {
+            setHasFixedSize(true)
+            layoutManager = LinearLayoutManager(this@MainActivity)
+            itemAnimator = DefaultItemAnimator()
+        }
 
         val tabLayout: TabLayout = findViewById(R.id.tabLayout)
         tabLayout.addOnTabSelectedListener(object : TabLayout.OnTabSelectedListener {
@@ -36,6 +44,7 @@ class MainActivity : AppCompatActivity() {
                     Dictionary.current = dict
                     val after = Instant.now()
                     Snackbar.make(view, "Loading dictionary took ${after.millis - before.millis}ms", Snackbar.LENGTH_LONG).show()
+                    recyclerView.adapter = WordAdapter(dict.findPartial(".a.ka"), recyclerView)
                 }
             }
 

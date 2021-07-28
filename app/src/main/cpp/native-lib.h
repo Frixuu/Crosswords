@@ -11,18 +11,18 @@
 
 struct WordNode {
 
-    bool valid;
+    std::string validWord;
     std::unique_ptr<std::map<char, std::unique_ptr<WordNode>>> children;
 
-    WordNode(bool isValid) {
-        valid = isValid;
+    WordNode(const std::string&& word) {
+        validWord = std::move(word);
     }
 
-    WordNode(): WordNode(false) {
+    WordNode(): WordNode(std::string()) {
     }
 
     bool isValid() {
-        return valid;
+        return !validWord.empty();
     }
 
     bool push_word(const std::string&& str, int32_t index) {
@@ -33,18 +33,42 @@ struct WordNode {
         auto strLen = str.length();
 
         if (index < strLen) {
-            auto entry = children->try_emplace(str.at(index), std::make_unique<WordNode>());
+            auto entry = children->try_emplace(tolower(str.at(index)), std::make_unique<WordNode>());
             return entry.first->second->push_word(std::move(str), index + 1);
         } else if (index == (strLen - 1)) {
             auto entry = children->try_emplace(str.at(index), std::make_unique<WordNode>());
-            entry.first->second->valid = true;
+            entry.first->second->validWord = std::move(str);
         } else if (index == strLen) {
-            valid = true;
+            validWord = std::move(str);
         } else {
             return false;
         }
 
         return true;
+    }
+
+    void find_word(std::vector<std::string>& vec, const std::string& pattern, int32_t index) {
+        if (!children || index > pattern.length()) {
+            return;
+        } else if (index == pattern.length()) {
+            if (!validWord.empty()) {
+                auto wordCopy = validWord;
+                vec.emplace_back(std::move(wordCopy));
+            }
+            return;
+        } else {
+            auto ch = pattern.at(index);
+            if (ch == '.') {
+                for (const auto& entry : *children) {
+                    entry.second->find_word(vec, pattern, index + 1);
+                }
+            } else {
+                auto result = children->find(ch);
+                if (result != children->end()) {
+                    result->second->find_word(vec, pattern, index + 1);
+                }
+            }
+        }
     }
 };
 
@@ -108,6 +132,10 @@ private:
 public:
     Dictionary() {
         forwardIndex = std::make_unique<WordNode>();
+    }
+
+    void find_word(std::vector<std::string>& vec, const std::string& pattern) {
+        forwardIndex->find_word(vec, pattern, 0);
     }
 
     void load_from_android_asset(const char *buffer, off_t length, int concLevel) {
