@@ -27,10 +27,13 @@ find_library( # Defines the name of the path variable that stores the
               # CMake needs to locate.
               log )
 
+find_library(
+        android-lib
+        android )
 
 add_library( app-glue
              STATIC
              ${ANDROID_NDK}/sources/android/native_app_glue/android_native_app_glue.c )
 
 # You need to link static libraries against your shared native library.
-target_link_libraries( native-lib app-glue ${log-lib} )
+target_link_libraries( native-lib app-glue ${log-lib} ${android-lib} )

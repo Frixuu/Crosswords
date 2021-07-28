@@ -10,6 +10,7 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import org.joda.time.Instant
 import xyz.lukasz.xword.dictionaries.Dictionary
+import xyz.lukasz.xword.dictionaries.DictionaryJVM
 
 class MainActivity : AppCompatActivity() {
 
@@ -29,10 +30,10 @@ class MainActivity : AppCompatActivity() {
                 // Handle tab select
                 Log.i("MA", "tab selected: ${tab?.text}")
                 GlobalScope.launch {
-                    Dictionary.current = null
                     val before = Instant.now()
-                    val dictionary = Dictionary.loadFromAsset(this@MainActivity, "dictionaries/pl_PL/words.txt")
-                    Dictionary.current = dictionary
+                    val dict = Dictionary()
+                    dict.loadFromAsset(this@MainActivity, "dictionaries/pl_PL/words.txt");
+                    Dictionary.current = dict
                     val after = Instant.now()
                     Snackbar.make(view, "Loading dictionary took ${after.millis - before.millis}ms", Snackbar.LENGTH_LONG).show()
                 }
