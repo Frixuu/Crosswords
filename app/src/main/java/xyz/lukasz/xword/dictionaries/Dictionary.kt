@@ -32,7 +32,6 @@ class Dictionary {
 
         suspend fun loadFromAsset(activity: Activity, filename: String): Dictionary {
 
-            val before = Instant.now()
             val dict = Dictionary()
 
             val desc = activity.assets.openFd(filename)
@@ -62,6 +61,7 @@ class Dictionary {
                     }
                 }
             }
+
             Log.i("Dictionary", "Starting to scan the file from indices ${startIndices.joinToString(", ", "[", "]")}")
 
             val parsingJobs = (0 until concurrentCount).map { i ->
@@ -118,7 +118,6 @@ class Dictionary {
 
             parsingJobs.joinAll()
             val afterJoin = Instant.now()
-            Log.i("Dictionary", "Loading dictionary \"$filename\" took ${afterJoin.millis - before.millis}ms")
             dict.forwardIndex.collectLocks(2)
             val afterUnlock = Instant.now()
             Log.i("Dictionary", "Collecting spinlocks \"$filename\" took ${afterUnlock.millis - afterJoin.millis}ms")
