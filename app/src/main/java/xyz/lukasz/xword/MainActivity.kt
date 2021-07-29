@@ -63,11 +63,19 @@ class MainActivity : AppCompatActivity() {
 
                 val searchThread = Thread {
                     val currentThread = Thread.currentThread()
-                    val results = currentDict.findPartial(s.toString())
+                    val limit = 200
+                    val results = currentDict.findPartial(s.toString(), null, limit)
                     synchronized (currentThreadLock) {
                         if (currentThread == mostRecentThread) {
                             runOnUiThread {
                                 recyclerView.adapter = WordAdapter(results, recyclerView)
+                                if (results.size >= limit) {
+                                    val message = view.resources.getText(R.string.search_showing_only).toString()
+                                    Snackbar.make(view,
+                                        String.format(message, results.size),
+                                        Snackbar.LENGTH_LONG)
+                                        .show()
+                                }
                             }
                         }
                     }

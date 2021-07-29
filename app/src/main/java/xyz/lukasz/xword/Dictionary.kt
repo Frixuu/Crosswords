@@ -2,6 +2,7 @@ package xyz.lukasz.xword
 
 import android.app.Activity
 import android.content.res.AssetManager
+import java.util.*
 
 class Dictionary {
 
@@ -21,11 +22,12 @@ class Dictionary {
         return nativePtr != 0L
     }
 
-    suspend fun loadFromAsset(activity: Activity, filename: String) {
+    fun loadFromAsset(activity: Activity, filename: String) {
         val assetManager = activity.assets
         val oldPtr = nativePtr
         nativePtr = 0
-        val ptr = loadNative(assetManager, filename, oldPtr, 4)
+        val threadCount = Runtime.getRuntime().availableProcessors()
+        val ptr = loadNative(assetManager, filename, oldPtr, threadCount)
         if (ptr == 0L) {
             throw Exception("Native loading failed")
         }
@@ -35,10 +37,12 @@ class Dictionary {
     /**
      * Finds all matching a provided pattern.
      * For example, a pattern ".ró." would match "drób", "próg" and "król".
+     * @param limit How many strings can be returned at most, a negative value means all of them.
      */
     fun findPartial(pattern: String, cursor: String? = null, limit: Int = -1): List<String> {
+        assert(limit <= 500)
         return if (isLoaded()) {
-            findPartialNative(nativePtr, pattern.lowercase(), cursor, limit).toList()
+            listOf(*findPartialNative(nativePtr, pattern.lowercase(), cursor, limit))
         } else {
             emptyList()
         }

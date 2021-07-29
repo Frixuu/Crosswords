@@ -2,4 +2,5 @@
     <string name="app_name">Crossword Helper</string>
     <string name="input_box">Enter a word or its fragment</string>
     <string name="input_query">Search</string>
+    <string name="search_showing_only">Showing only %d first results</string>
 </resources>

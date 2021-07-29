@@ -67,7 +67,7 @@ Java_xyz_lukasz_xword_Dictionary_findPartialNative(JNIEnv *env,
 
     // Find all the matching words
     std::vector<std::string> resultVec;
-    dictionary->find_words(resultVec, word);
+    dictionary->find_words(resultVec, word, maxCount, cursor);
 
     // Map found words to a Java string array
     auto stringClazz = env->FindClass("java/lang/String");
@@ -75,5 +75,6 @@ Java_xyz_lukasz_xword_Dictionary_findPartialNative(JNIEnv *env,
     for (int i = 0; i < resultVec.size(); ++i) {
         env->SetObjectArrayElement(results, i, env->NewStringUTF(resultVec.at(i).c_str()));
     }
+
     return results;
 }

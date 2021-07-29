@@ -65,8 +65,12 @@ namespace crossword {
             forward_index.reset();
         }
 
-        void find_words(std::vector<std::string> &vec, const std::string &pattern) {
-            forward_index->find_words(vec, pattern, 0, -1, std::string());
+        void find_words(std::vector<std::string> &vec,
+                        const std::string &pattern,
+                        size_t limit,
+                        const std::string &cursor) {
+
+            forward_index->find_words(vec, pattern, 0, limit, cursor);
         }
 
         /// Puts words in this dictionary, using multiple threads.

@@ -74,7 +74,7 @@ namespace crossword {
 
             if (!children || index > pattern.length()) {
                 return;
-            } else if (limit > 0 && limit < vec.size()) {
+            } else if (limit > 0 && limit <= vec.size()) {
                 return;
             } else if (index == pattern.length()) {
                 if (valid()) {

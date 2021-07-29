@@ -3,4 +3,5 @@
     <string name="app_name">Crossword Helper</string>
     <string name="input_box">Wpisz szukany wyraz bądź jego część</string>
     <string name="input_query">Szukaj</string>
+    <string name="search_showing_only">Wyświetlam tylko %d pierwszych wyników</string>
 </resources>
