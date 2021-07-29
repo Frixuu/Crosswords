@@ -1,4 +1,4 @@
-package xyz.lukasz.xword.dictionaries
+package xyz.lukasz.xword
 
 import android.app.Activity
 import android.content.res.AssetManager

@@ -19,7 +19,6 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import org.joda.time.Instant
-import xyz.lukasz.xword.dictionaries.Dictionary
 
 class MainActivity : AppCompatActivity() {
 

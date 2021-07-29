@@ -7,18 +7,19 @@
 using namespace crossword;
 
 extern "C" JNIEXPORT jint JNICALL
-Java_xyz_lukasz_xword_MainActivity_fooFromNative(JNIEnv *env, jobject thiz) {
+Java_xyz_lukasz_xword_MainActivity_fooFromNative(JNIEnv *env,
+                                                 [[maybe_unused]] jobject thiz) {
     return 4;
 }
 
 extern "C"
 JNIEXPORT jlong JNICALL
-Java_xyz_lukasz_xword_dictionaries_Dictionary_loadNative(JNIEnv *env,
-                                                         [[maybe_unused]] jobject thiz,
-                                                         jobject assetMgr,
-                                                         jstring path,
-                                                         jlong prev_ptr,
-                                                         jint concLevel) {
+Java_xyz_lukasz_xword_Dictionary_loadNative(JNIEnv *env,
+                                            [[maybe_unused]] jobject thiz,
+                                            jobject assetMgr,
+                                            jstring path,
+                                            jlong prev_ptr,
+                                            jint concLevel) {
 
     // If the caller specified an address of a previously created Dictionary, delete it
     // TODO: consider using a custom arena?
@@ -52,12 +53,12 @@ Java_xyz_lukasz_xword_dictionaries_Dictionary_loadNative(JNIEnv *env,
 
 extern "C"
 JNIEXPORT jobjectArray JNICALL
-Java_xyz_lukasz_xword_dictionaries_Dictionary_findPartialNative(JNIEnv *env,
-                                                                jobject thiz,
-                                                                jlong native_ptr,
-                                                                jstring jword,
-                                                                jstring jcursor,
-                                                                jint maxCount) {
+Java_xyz_lukasz_xword_Dictionary_findPartialNative(JNIEnv *env,
+                                                   [[maybe_unused]] jobject thiz,
+                                                   jlong native_ptr,
+                                                   jstring jword,
+                                                   jstring jcursor,
+                                                   jint maxCount) {
 
     // Marshal Java arguments to native
     auto word = crossword::utils::string_from_java(env, jword);
