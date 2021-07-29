@@ -1,29 +1,36 @@
-#include "native-lib.h"
+#include "native-lib.hpp"
+#include "string_utils.hpp"
 #include <android/asset_manager.h>
 #include <jni.h>
 #include <string>
 
-extern "C" JNIEXPORT jint JNICALL Java_xyz_lukasz_xword_MainActivity_fooFromNative(JNIEnv *env, jobject thiz) {
+using namespace crossword;
+
+extern "C" JNIEXPORT jint JNICALL
+Java_xyz_lukasz_xword_MainActivity_fooFromNative(JNIEnv *env, jobject thiz) {
     return 4;
 }
 
 extern "C"
 JNIEXPORT jlong JNICALL
 Java_xyz_lukasz_xword_dictionaries_Dictionary_loadNative(JNIEnv *env,
-                                                         jobject thiz,
+                                                         [[maybe_unused]] jobject thiz,
                                                          jobject assetMgr,
                                                          jstring path,
-                                                         jlong oldPtr,
+                                                         jlong prev_ptr,
                                                          jint concLevel) {
 
-    if (oldPtr != 0) {
-        delete reinterpret_cast<Dictionary*>(oldPtr);
-    }
+    // If the caller specified an address of a previously created Dictionary, delete it
+    // TODO: consider using a custom arena?
+    auto dictionary = reinterpret_cast<Dictionary *>(prev_ptr);
+    delete dictionary;
 
-    Dictionary* dictionary = nullptr;
+    // Assign null so that we can return a valid value even if asset mmapping fails
+    dictionary = nullptr;
 
+    // Mmap the whole uncompressed file
     auto assetManager = AAssetManager_fromJava(env, assetMgr);
-    auto filename = env->GetStringUTFChars(path, 0);
+    auto filename = env->GetStringUTFChars(path, nullptr);
     auto asset = AAssetManager_open(assetManager, filename, AASSET_MODE_BUFFER);
 
     off_t start = 0;
@@ -34,7 +41,7 @@ Java_xyz_lukasz_xword_dictionaries_Dictionary_loadNative(JNIEnv *env,
         auto buffer = AAsset_getBuffer(asset);
         if (buffer != nullptr) {
             dictionary = new Dictionary();
-            dictionary->load_from_android_asset(static_cast<const char*>(buffer), length, concLevel);
+            dictionary->load_from_buffer_par(static_cast<const char *>(buffer), length, concLevel);
         }
     }
 
@@ -48,20 +55,24 @@ JNIEXPORT jobjectArray JNICALL
 Java_xyz_lukasz_xword_dictionaries_Dictionary_findPartialNative(JNIEnv *env,
                                                                 jobject thiz,
                                                                 jlong native_ptr,
-                                                                jstring jword) {
+                                                                jstring jword,
+                                                                jstring jcursor,
+                                                                jint maxCount) {
 
-    jobjectArray results;
-    auto word = env->GetStringUTFChars(jword, 0);
-    Dictionary* dictionary = reinterpret_cast<Dictionary*>(native_ptr);
+    // Marshal Java arguments to native
+    auto word = crossword::utils::string_from_java(env, jword);
+    auto cursor = crossword::utils::string_from_java(env, jcursor);
+    auto dictionary = reinterpret_cast<Dictionary *>(native_ptr);
+
+    // Find all the matching words
     std::vector<std::string> resultVec;
-    dictionary->find_word(resultVec, word);
-    results = (jobjectArray)env->NewObjectArray(
-            resultVec.size(),
-            env->FindClass("java/lang/String"),
-            env->NewStringUTF(""));
-    for (int i = 0; i < resultVec.size(); i++) {
+    dictionary->find_words(resultVec, word);
+
+    // Map found words to a Java string array
+    auto stringClazz = env->FindClass("java/lang/String");
+    auto results = env->NewObjectArray(resultVec.size(), stringClazz, nullptr);
+    for (int i = 0; i < resultVec.size(); ++i) {
         env->SetObjectArrayElement(results, i, env->NewStringUTF(resultVec.at(i).c_str()));
     }
-    env->ReleaseStringUTFChars(jword, word);
     return results;
 }

@@ -7,8 +7,15 @@ class Dictionary {
 
     private var nativePtr: Long = 0
 
-    private external fun loadNative(assetManager: AssetManager, filename: String, oldPtr: Long, concLevel: Int): Long
-    private external fun findPartialNative(nativePtr: Long, word: String): Array<String>
+    private external fun loadNative(assetManager: AssetManager,
+                                    filename: String,
+                                    oldPtr: Long,
+                                    concLevel: Int): Long
+
+    private external fun findPartialNative(nativePtr: Long,
+                                           word: String,
+                                           cursor: String?,
+                                           limit: Int): Array<String>
 
     fun isLoaded(): Boolean {
         return nativePtr != 0L
@@ -29,8 +36,10 @@ class Dictionary {
      * Finds all matching a provided pattern.
      * For example, a pattern ".ró." would match "drób", "próg" and "król".
      */
-    suspend fun findPartial(pattern: String): List<String> {
-        return if (isLoaded()) findPartialNative(nativePtr, pattern.lowercase()).toList() else listOf()
+    suspend fun findPartial(pattern: String, cursor: String? = null, limit: Int = -1): List<String> {
+        return if (isLoaded()) {
+            findPartialNative(nativePtr, pattern.lowercase(), cursor, limit).toList()
+        } else emptyList()
     }
 
     companion object {
