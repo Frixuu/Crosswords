@@ -1,8 +1,6 @@
 package xyz.lukasz.xword
 
 import android.os.Bundle
-import android.os.Handler
-import android.os.Looper
 import android.text.Editable
 import android.text.TextWatcher
 import android.util.Log
@@ -15,8 +13,6 @@ import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.snackbar.Snackbar
 import com.google.android.material.tabs.TabLayout
 import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import org.joda.time.Instant
 
@@ -24,8 +20,8 @@ class MainActivity : AppCompatActivity() {
 
     external fun fooFromNative(): Int
 
-    private var currentJob: Job? = null
-    private val currentJobLock = Any()
+    private var mostRecentThread : Thread? = null
+    private val currentThreadLock = Any()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -64,28 +60,24 @@ class MainActivity : AppCompatActivity() {
                     Log.w("MainActivity", "Editable is null!")
                     return
                 }
-                GlobalScope.launch {
-                    coroutineScope {
-                        var results: List<String> = listOf()
-                        var thisJob: Job? = null
-                        synchronized (currentJobLock) {
-                            currentJob?.cancel()
-                            thisJob = launch {
-                                results = currentDict.findPartial(s.toString())
-                            }
-                            currentJob = thisJob
-                        }
-                        thisJob!!.join()
-                        synchronized(currentJobLock) {
-                            if (thisJob == currentJob) {
-                                val handler = Handler(Looper.getMainLooper())
-                                handler.post {
-                                    recyclerView.adapter = WordAdapter(results, recyclerView)
-                                }
+
+                val searchThread = Thread {
+                    val currentThread = Thread.currentThread()
+                    val results = currentDict.findPartial(s.toString())
+                    synchronized (currentThreadLock) {
+                        if (currentThread == mostRecentThread) {
+                            runOnUiThread {
+                                recyclerView.adapter = WordAdapter(results, recyclerView)
                             }
                         }
                     }
                 }
+
+                synchronized (currentThreadLock) {
+                    mostRecentThread = searchThread
+                }
+
+                searchThread.start()
             }
         })
 
@@ -98,7 +90,7 @@ class MainActivity : AppCompatActivity() {
                 GlobalScope.launch {
                     val before = Instant.now()
                     val dict = Dictionary()
-                    dict.loadFromAsset(this@MainActivity, "dictionaries/pl_PL/words.txt");
+                    dict.loadFromAsset(this@MainActivity, "dictionaries/pl_PL/words.txt")
                     Dictionary.current = dict
                     val after = Instant.now()
                     Snackbar.make(view, "Loading dictionary took ${after.millis - before.millis}ms", Snackbar.LENGTH_LONG).show()

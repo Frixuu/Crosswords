@@ -36,10 +36,12 @@ class Dictionary {
      * Finds all matching a provided pattern.
      * For example, a pattern ".ró." would match "drób", "próg" and "król".
      */
-    suspend fun findPartial(pattern: String, cursor: String? = null, limit: Int = -1): List<String> {
+    fun findPartial(pattern: String, cursor: String? = null, limit: Int = -1): List<String> {
         return if (isLoaded()) {
             findPartialNative(nativePtr, pattern.lowercase(), cursor, limit).toList()
-        } else emptyList()
+        } else {
+            emptyList()
+        }
     }
 
     companion object {
