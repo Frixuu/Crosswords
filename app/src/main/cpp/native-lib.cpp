@@ -58,7 +58,7 @@ Java_xyz_lukasz_xword_Dictionary_findPartialNative(JNIEnv *env,
                                                    jlong native_ptr,
                                                    jstring jword,
                                                    jstring jcursor,
-                                                   jint maxCount) {
+                                                   jint limit) {
 
     // Marshal Java arguments to native
     auto word = crossword::utils::string_from_java(env, jword);
@@ -67,7 +67,7 @@ Java_xyz_lukasz_xword_Dictionary_findPartialNative(JNIEnv *env,
 
     // Find all the matching words
     std::vector<std::string> resultVec;
-    dictionary->find_words(resultVec, word, maxCount, cursor);
+    dictionary->find_words(resultVec, word, limit, cursor);
 
     // Map found words to a Java string array
     auto stringClazz = env->FindClass("java/lang/String");
