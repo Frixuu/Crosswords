@@ -62,7 +62,7 @@ class MainActivity : AppCompatActivity() {
                 }
 
                 val searchThread = Thread {
-                    val currentThread = Thread.currentThread()
+                    val currentThread = Thread.currentThread().apply { name = "Word search" }
                     val limit = 200
                     val results = currentDict.findPartial(s.toString(), null, limit)
                     synchronized (currentThreadLock) {
@@ -97,7 +97,7 @@ class MainActivity : AppCompatActivity() {
                 Log.i("MA", "tab selected: ${tab?.text}")
                 GlobalScope.launch {
                     val before = Instant.now()
-                    val dict = Dictionary()
+                    val dict = Dictionary.current ?: Dictionary()
                     dict.loadFromAsset(this@MainActivity, "dictionaries/pl_PL/words.txt")
                     Dictionary.current = dict
                     val after = Instant.now()
