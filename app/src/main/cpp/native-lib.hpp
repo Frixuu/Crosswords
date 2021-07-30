@@ -17,7 +17,7 @@ namespace crossword {
 
     private:
 
-        std::unique_ptr<WordNode> forward_index;
+        WordNode *forward_index;
 
         /// Parses lines from a UTF-8 encoded buffer and adds them to the dictionary.
         /// @param buffer Pointer to the data buffer.
@@ -58,11 +58,11 @@ namespace crossword {
 
         /// Creates a new, empty Dictionary.
         Dictionary() {
-            forward_index = std::make_unique<WordNode>();
+            forward_index = new WordNode();
         }
 
         ~Dictionary() {
-            forward_index.reset();
+            delete forward_index;
         }
 
         void find_words(std::vector<std::string> &vec,
@@ -73,12 +73,18 @@ namespace crossword {
             forward_index->find_words(vec, pattern, 0, limit, cursor);
         }
 
+        void merge(Dictionary *other) {
+            forward_index->merge(other->forward_index);
+            delete other;
+        }
+
         /// Puts words in this dictionary, using multiple threads.
         /// @param buffer Buffer to UTF-8 data
         /// @param length Length of the buffer
         /// @param par_count How many threads will be spawned to parse the buffer?
         void load_from_buffer_par(const char *buffer, int length, int par_count) {
             std::vector<std::thread> loadingThreads;
+            std::vector<Dictionary*> resultDictionaries;
 
             auto indices = new int[par_count];
             indices[0] = 0;
@@ -106,13 +112,19 @@ namespace crossword {
                     end = indices[i + 1];
                 }
 
-                auto thread = std::thread(&Dictionary::load_from_buffer, this, buffer, start, end);
+                auto dict = new Dictionary();
+                auto thread = std::thread(&Dictionary::load_from_buffer, dict, buffer, start, end);
                 loadingThreads.emplace_back(std::move(thread));
+                resultDictionaries.push_back(dict);
             }
 
             // Wait until parsing finishes
             for (auto &thread : loadingThreads) {
                 thread.join();
+            }
+
+            for (auto &dict : resultDictionaries) {
+                merge(dict);
             }
         }
     };

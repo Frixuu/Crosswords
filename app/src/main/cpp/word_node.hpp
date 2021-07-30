@@ -96,6 +96,32 @@ namespace crossword {
                 }
             }
         }
+
+        void merge(WordNode *other) {
+
+            if (other->valid()) {
+                valid_word = std::move(other->valid_word);
+            }
+
+            if (other->children) {
+                if (!children) {
+                    children = std::move(other->children);
+                } else {
+                    std::vector<std::pair<char, std::unique_ptr<WordNode>>> buffer;
+                    for (auto &other_child : *other->children) {
+                        auto result = children->find(other_child.first);
+                        if (result == children->end()) {
+                            buffer.emplace_back(std::move(other_child));
+                        } else {
+                            result->second->merge(other_child.second.release());
+                        }
+                    }
+                    for (auto &pair : buffer) {
+                        children->try_emplace(pair.first, std::move(pair.second));
+                    }
+                }
+            }
+        }
     };
 }
 
