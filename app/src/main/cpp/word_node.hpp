@@ -63,13 +63,13 @@ namespace crossword {
         /// starts search from that cursor value.
         void find_words(std::vector<std::string> &vec,
                         const std::string &pattern,
-                        int32_t index,
-                        size_t limit,
+                        size_t index,
+                        int32_t limit,
                         const std::string &cursor) {
 
             if (!children || index > pattern.length()) {
                 return;
-            } else if (limit > 0 && limit <= vec.size()) {
+            } else if (limit > 0 && limit <= static_cast<int>(vec.size())) {
                 return;
             } else if (index == pattern.length()) {
                 if (valid()) {
