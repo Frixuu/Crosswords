@@ -3,6 +3,7 @@
 
 #include <map>
 #include <string>
+#include "string_utils.hpp"
 
 namespace crossword {
 
@@ -23,8 +24,21 @@ namespace crossword {
 
         /// Determines whether this node represents a valid word.
         /// This only makes sense in context of a particular tree index.
-        bool valid() noexcept {
+        bool valid() const noexcept {
             return !valid_word.empty();
+        }
+
+        size_t calculate_size() noexcept {
+            size_t count = 0;
+            if (valid()) {
+                count += 1;
+            }
+            if (children) {
+                for (const auto &entry : *children) {
+                    count += entry.second->calculate_size();
+                }
+            }
+            return count;
         }
 
         /// Pushes a word deep down the index.
@@ -39,8 +53,12 @@ namespace crossword {
 
             auto word_length = str.length();
             if (index < word_length) {
-                // TODO: Handle UTF-8
-                auto key = tolower(str.at(index));
+
+                auto key = str.at(index);
+                if (utils::codepoint_is_one_byte(key)) {
+                    key = tolower(key);
+                }
+
                 auto [entry, _] = children->try_emplace(key, std::make_unique<WordNode>());
                 if (index < (word_length - 1)) {
                     return entry->second->push_word(std::move(str), index + 1);
@@ -67,15 +85,15 @@ namespace crossword {
                         int32_t limit,
                         const std::string &cursor) {
 
-            if (!children || index > pattern.length()) {
-                return;
-            } else if (limit > 0 && limit <= static_cast<int>(vec.size())) {
+            if (limit > 0 && limit <= static_cast<int>(vec.size())) {
                 return;
             } else if (index == pattern.length()) {
                 if (valid()) {
-                    auto wordCopy = valid_word;
-                    vec.emplace_back(std::move(wordCopy));
+                    auto word_copy = valid_word;
+                    vec.emplace_back(std::move(word_copy));
                 }
+                return;
+            } else if (!children || index > pattern.length()) {
                 return;
             } else {
                 auto ch = pattern.at(index);
@@ -87,6 +105,13 @@ namespace crossword {
                     auto result = children->find(ch);
                     if (result != children->end()) {
                         result->second->find_words(vec, pattern, index + 1, limit, cursor);
+                    }
+                    auto ch_lower = tolower(ch);
+                    if (ch != ch_lower) {
+                        auto result = children->find(ch_lower);
+                        if (result != children->end()) {
+                            result->second->find_words(vec, pattern, index + 1, limit, cursor);
+                        }
                     }
                 }
             }

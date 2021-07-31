@@ -18,23 +18,28 @@ namespace crossword::utils {
         }
     }
 
-    constexpr bool codepoint_is_one_byte(const char b) {
-        return (b & 0b10000000) != 0b10000000;
+
+    constexpr bool codepoint_is_one_byte(const unsigned char b) {
+        return b < 0b10000000;
     }
 
-    constexpr bool codepoint_is_two_bytes(const char b) {
+    constexpr bool codepoint_is_two_bytes(const unsigned char b) {
         return (b & 0b11000000) == 0b11000000;
     }
 
-    constexpr bool codepoint_is_three_bytes(const char b) {
+    constexpr bool codepoint_is_three_bytes(const unsigned char b) {
         return (b & 0b11100000) == 0b11100000;
     }
 
-    constexpr bool codepoint_is_four_bytes(const char b) {
+    constexpr bool codepoint_is_four_bytes(const unsigned char b) {
         return (b & 0b11110000) == 0b11110000;
     }
 
-    constexpr int codepoint_size(const char b) {
+    constexpr bool codepoint_is_continuation(const unsigned char b) {
+        return b >= 0b10000000 && b <= 0b10111111;
+    }
+
+    constexpr int codepoint_size(const unsigned char b) {
         if (codepoint_is_one_byte(b)) return 1;
         if (codepoint_is_two_bytes(b)) return 2;
         if (codepoint_is_three_bytes(b)) return 3;

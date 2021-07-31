@@ -1,7 +1,6 @@
-#ifndef CROSSWORD_HELPER_NATIVE_LIB_HPP
-#define CROSSWORD_HELPER_NATIVE_LIB_HPP
+#ifndef CROSSWORD_HELPER_DICTIONARY_HPP
+#define CROSSWORD_HELPER_DICTIONARY_HPP
 
-#include <android/asset_manager_jni.h>
 #include <map>
 #include <string>
 #include <thread>
@@ -23,25 +22,19 @@ namespace crossword {
         /// @param buffer Pointer to the data buffer.
         /// @param start Index to start searching from.
         /// @param end Exclusive end index of buffer parsing.
-        void load_from_buffer(const char *buffer, int start, int end) {
+        void load_from_buffer(const char *buffer, size_t start, size_t end) {
             std::vector<char> line_buffer;
             auto index = start;
-            auto bytes_till_codepoint_end = 0;
             while (index < end) {
                 auto byte = buffer[index++];
-                if (bytes_till_codepoint_end > 0) {
-                    bytes_till_codepoint_end--;
+                if (byte != '\n' && byte != '\r') {
                     line_buffer.emplace_back(byte);
                 } else {
-                    if (byte != '\n' && byte != '\r') {
-                        line_buffer.emplace_back(byte);
-                        bytes_till_codepoint_end = utils::codepoint_size(byte) - 1;
-                    } else {
-                        if (!line_buffer.empty()) {
-                            auto word = std::string(line_buffer.begin(), line_buffer.end());
-                            line_buffer.clear();
-                            forward_index->push_word(std::move(word), 0);
-                        }
+                    // CRLF sequences and multiple line breaks are valid
+                    if (!line_buffer.empty()) {
+                        auto word = std::string(line_buffer.begin(), line_buffer.end());
+                        line_buffer.clear();
+                        forward_index->push_word(std::move(word), 0);
                     }
                 }
             }
@@ -72,28 +65,34 @@ namespace crossword {
             forward_index->merge(other->forward_index.get());
         }
 
+        size_t calculate_size() {
+            return forward_index->calculate_size();
+        }
+
         /// Puts words in this dictionary, using multiple threads.
         /// @param buffer Buffer to UTF-8 data
         /// @param length Length of the buffer
         /// @param par_count How many threads will be spawned to parse the buffer?
         void load_from_buffer_par(const char *buffer, int length, int par_count) {
-            std::vector<std::thread> loadingThreads;
-            std::vector<std::unique_ptr<Dictionary>> resultDictionaries;
+            std::vector<std::thread> loading_threads;
+            std::vector<std::unique_ptr<Dictionary>> result_dictionaries;
 
-            auto indices = new int[par_count];
+            int indices[par_count];
             indices[0] = 0;
 
-            // Split the buffer into par_count equal-sized segments,
-            // then align the segment size to the nearest line break
+            // Split the buffer into chunks, one for every thread
             for (int i = 1; i < par_count; i++) {
+
+                // Since we do not know the word length distribution,
+                // we start from the equal-sized segments
                 int candidate = i * length / par_count;
+
+                // CR and LF cannot be in later bytes of the codepoint,
+                // so break on any of them
                 while (candidate < length) {
-                    auto thisByte = buffer[candidate++];
-                    auto nextByte = buffer[candidate];
-                    // TODO: Handle UTF-8 codepoints
-                    if ((thisByte == '\n' || thisByte == '\r') &&
-                        nextByte != '\n' && nextByte != '\r') {
-                        indices[i] = candidate + 1;
+                    auto curr_byte = buffer[candidate++];
+                    if (curr_byte == '\n' || curr_byte == '\r') {
+                        indices[i] = candidate;
                         break;
                     }
                 }
@@ -108,22 +107,20 @@ namespace crossword {
 
                 auto dict = std::make_unique<Dictionary>();
                 auto thread = std::thread(&Dictionary::load_from_buffer, dict.get(), buffer, start, end);
-                loadingThreads.emplace_back(std::move(thread));
-                resultDictionaries.emplace_back(std::move(dict));
+                loading_threads.emplace_back(std::move(thread));
+                result_dictionaries.emplace_back(std::move(dict));
             }
 
-            delete[] indices;
-
             // Wait until parsing finishes
-            for (auto &thread : loadingThreads) {
+            for (auto &thread : loading_threads) {
                 thread.join();
             }
 
-            for (auto &dict : resultDictionaries) {
+            for (auto &dict : result_dictionaries) {
                 merge(dict.get());
             }
         }
     };
 }
 
-#endif //CROSSWORD_HELPER_NATIVE_LIB_HPP
+#endif //CROSSWORD_HELPER_DICTIONARY_HPP
