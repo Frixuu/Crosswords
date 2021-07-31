@@ -82,35 +82,55 @@ namespace crossword {
         void find_words(std::vector<std::string> &vec,
                         const std::string &pattern,
                         size_t index,
+                        int32_t point_offset,
                         int32_t limit,
                         const std::string &cursor) {
 
+            // The pattern matched a wildcard and parent was a multi-byte character
+            if (point_offset > 0) {
+                auto offset = point_offset - 1;
+                for (const auto &entry : *children) {
+                    entry.second->find_words(vec, pattern, index, offset, limit, cursor);
+                }
+                return;
+            }
+
+            // The result vector is full
             if (limit > 0 && limit <= static_cast<int>(vec.size())) {
                 return;
-            } else if (index == pattern.length()) {
+            }
+
+            if (index == pattern.length()) {
                 if (valid()) {
                     auto word_copy = valid_word;
                     vec.emplace_back(std::move(word_copy));
                 }
                 return;
-            } else if (!children || index > pattern.length()) {
-                return;
-            } else {
+            }
+
+            if (children && index <= pattern.length()) {
                 auto ch = pattern.at(index);
                 if (ch == '.') {
                     for (const auto &entry : *children) {
-                        entry.second->find_words(vec, pattern, index + 1, limit, cursor);
+                        auto key = entry.first;
+
+                        auto offset = 0;
+                        if (!utils::codepoint_is_continuation(key)) {
+                            offset = utils::codepoint_size(key) - 1;
+                        }
+
+                        entry.second->find_words(vec, pattern, index + 1, offset, limit, cursor);
                     }
                 } else {
                     auto result = children->find(ch);
                     if (result != children->end()) {
-                        result->second->find_words(vec, pattern, index + 1, limit, cursor);
+                        result->second->find_words(vec, pattern, index + 1, 0, limit, cursor);
                     }
                     auto ch_lower = tolower(ch);
                     if (ch != ch_lower) {
                         auto result = children->find(ch_lower);
                         if (result != children->end()) {
-                            result->second->find_words(vec, pattern, index + 1, limit, cursor);
+                            result->second->find_words(vec, pattern, index + 1, 0, limit, cursor);
                         }
                     }
                 }

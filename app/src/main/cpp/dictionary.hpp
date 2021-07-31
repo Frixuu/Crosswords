@@ -58,7 +58,7 @@ namespace crossword {
                         size_t limit,
                         const std::string &cursor) {
 
-            forward_index->find_words(vec, pattern, 0, limit, cursor);
+            forward_index->find_words(vec, pattern, 0, 0, limit, cursor);
         }
 
         void merge(Dictionary *other) {
