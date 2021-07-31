@@ -17,7 +17,7 @@ namespace crossword {
 
     private:
 
-        WordNode *forward_index;
+        std::unique_ptr<WordNode> forward_index;
 
         /// Parses lines from a UTF-8 encoded buffer and adds them to the dictionary.
         /// @param buffer Pointer to the data buffer.
@@ -57,12 +57,7 @@ namespace crossword {
     public:
 
         /// Creates a new, empty Dictionary.
-        Dictionary() {
-            forward_index = new WordNode();
-        }
-
-        ~Dictionary() {
-            delete forward_index;
+        Dictionary() : forward_index(std::make_unique<WordNode>()) {
         }
 
         void find_words(std::vector<std::string> &vec,
@@ -74,8 +69,7 @@ namespace crossword {
         }
 
         void merge(Dictionary *other) {
-            forward_index->merge(other->forward_index);
-            delete other;
+            forward_index->merge(other->forward_index.get());
         }
 
         /// Puts words in this dictionary, using multiple threads.
@@ -84,7 +78,7 @@ namespace crossword {
         /// @param par_count How many threads will be spawned to parse the buffer?
         void load_from_buffer_par(const char *buffer, int length, int par_count) {
             std::vector<std::thread> loadingThreads;
-            std::vector<Dictionary*> resultDictionaries;
+            std::vector<std::unique_ptr<Dictionary>> resultDictionaries;
 
             auto indices = new int[par_count];
             indices[0] = 0;
@@ -112,11 +106,13 @@ namespace crossword {
                     end = indices[i + 1];
                 }
 
-                auto dict = new Dictionary();
-                auto thread = std::thread(&Dictionary::load_from_buffer, dict, buffer, start, end);
+                auto dict = std::make_unique<Dictionary>();
+                auto thread = std::thread(&Dictionary::load_from_buffer, dict.get(), buffer, start, end);
                 loadingThreads.emplace_back(std::move(thread));
-                resultDictionaries.push_back(dict);
+                resultDictionaries.emplace_back(std::move(dict));
             }
+
+            delete[] indices;
 
             // Wait until parsing finishes
             for (auto &thread : loadingThreads) {
@@ -124,7 +120,7 @@ namespace crossword {
             }
 
             for (auto &dict : resultDictionaries) {
-                merge(dict);
+                merge(dict.get());
             }
         }
     };

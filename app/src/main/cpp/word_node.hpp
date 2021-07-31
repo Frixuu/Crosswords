@@ -14,16 +14,11 @@ namespace crossword {
 
         /// Creates a new WordNode.
         /// The node will be representing a valid word.
-        WordNode(const std::string &&word) {
-            valid_word = std::move(word);
+        explicit WordNode(const std::string &&word) : valid_word(std::move(word)) {
         }
 
         /// Creates a new WordNode representing an invalid word.
-        WordNode() : WordNode(std::string()) {
-        }
-
-        ~WordNode() {
-            children.reset();
+        WordNode() {
         }
 
         /// Determines whether this node represents a valid word.
@@ -113,7 +108,7 @@ namespace crossword {
                         if (result == children->end()) {
                             buffer.emplace_back(std::move(other_child));
                         } else {
-                            result->second->merge(other_child.second.release());
+                            result->second->merge(other_child.second.get());
                         }
                     }
                     for (auto &pair : buffer) {
