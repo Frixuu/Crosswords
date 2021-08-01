@@ -50,9 +50,6 @@ Java_xyz_lukasz_xword_Dictionary_loadNative(JNIEnv *env,
         }
     }
 
-    auto size = dictionary->calculate_size();
-    android::infof("Dictionary reports %d elements.", size);
-
     AAsset_close(asset);
     env->ReleaseStringUTFChars(path, filename);
     return reinterpret_cast<jlong>(dictionary);
