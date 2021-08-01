@@ -3,6 +3,7 @@
 
 #include <map>
 #include <string>
+#include "collections/chunked_map.hpp"
 #include "utils/utf8.hpp"
 
 namespace crossword {
@@ -11,16 +12,14 @@ namespace crossword {
     struct WordNode {
 
         std::string valid_word;
-        std::unique_ptr<std::map<char, std::unique_ptr<WordNode>>> children;
-
-        /// Creates a new WordNode.
-        /// The node will be representing a valid word.
-        explicit WordNode(const std::string &&word) : valid_word(std::move(word)) {
-        }
+        collections::chunked_map<WordNode> children;
 
         /// Creates a new WordNode representing an invalid word.
         WordNode() {
         }
+
+        WordNode(const WordNode&& other) = delete;
+        WordNode& operator=(const WordNode& other) = delete;
 
         /// Determines whether this node represents a valid word.
         /// This only makes sense in context of a particular tree index.
@@ -28,14 +27,28 @@ namespace crossword {
             return !valid_word.empty();
         }
 
+        bool has_children() const noexcept {
+            return !children.empty();
+        }
+
         size_t calculate_size() noexcept {
             size_t count = 0;
             if (valid()) {
                 count += 1;
             }
-            if (children) {
-                for (const auto &entry : *children) {
-                    count += entry.second->calculate_size();
+            if (has_children()) {
+                for (const auto &entry : children) {
+                    count += entry->second->get()->calculate_size();
+                }
+            }
+            return count;
+        }
+
+        size_t count_nodes() noexcept {
+            size_t count = 1;
+            if (has_children()) {
+                for (const auto &entry : children) {
+                    count += entry->second->get()->count_nodes();
                 }
             }
             return count;
@@ -44,26 +57,21 @@ namespace crossword {
         /// Pushes a word deep down the index.
         /// @param str Word being pushed into the index.
         /// @param index Current index depth.
-        bool push_word(const std::string &&str, size_t index) {
-
-            // If this node does not have children at this point, create the collection
-            if (!children) {
-                children = std::make_unique<std::map<char, std::unique_ptr<WordNode>>>();
-            }
+        bool push_word(std::string &&str, size_t index) {
 
             auto word_length = str.length();
             if (index < word_length) {
 
                 auto key = str.at(index);
                 if (utils::codepoint_is_one_byte(key)) {
-                    key = tolower(key);
+                    key = utils::to_lower(key);
                 }
 
-                auto [entry, _] = children->try_emplace(key, std::make_unique<WordNode>());
+                auto [entry, _] = children.try_emplace(key, std::make_unique<WordNode>());
                 if (index < (word_length - 1)) {
-                    return entry->second->push_word(std::move(str), index + 1);
+                    return entry.second->get()->push_word(std::move(str), index + 1);
                 } else {
-                    entry->second->valid_word = std::move(str);
+                    entry.second->get()->valid_word = std::move(str);
                 }
             } else if (index == word_length) {
                 valid_word = std::move(str);
@@ -89,9 +97,9 @@ namespace crossword {
             // The pattern matched a wildcard and parent was a multi-byte character
             if (point_offset > 0) {
                 auto offset = point_offset - 1;
-                for (const auto &entry : *children) {
+                for (auto entry : children) {
                     // The wildcard is a single character, do not increment index
-                    entry.second->find_words(vec, pattern, index, offset, limit, cursor);
+                    entry->second->get()->find_words(vec, pattern, index, offset, limit, cursor);
                 }
                 return;
             }
@@ -109,29 +117,29 @@ namespace crossword {
                 return;
             }
 
-            if (children && index <= pattern.length()) {
+            if (has_children() && index <= pattern.length()) {
                 auto ch = pattern.at(index);
                 if (ch == '.') {
-                    for (const auto &entry : *children) {
-                        auto key = entry.first;
+                    for (const auto &entry : children) {
+                        auto key = entry->first;
 
                         auto offset = 0;
                         if (!utils::codepoint_is_continuation(key)) {
                             offset = utils::codepoint_size(key) - 1;
                         }
 
-                        entry.second->find_words(vec, pattern, index + 1, offset, limit, cursor);
+                        entry->second->get()->find_words(vec, pattern, index + 1, offset, limit, cursor);
                     }
                 } else {
-                    auto result = children->find(ch);
-                    if (result != children->end()) {
-                        result->second->find_words(vec, pattern, index + 1, 0, limit, cursor);
+                    auto result = children.find(ch);
+                    if (result != children.end()) {
+                        (*result)->second->get()->find_words(vec, pattern, index + 1, 0, limit, cursor);
                     }
-                    auto ch_lower = tolower(ch);
+                    auto ch_lower = utils::to_lower(ch);
                     if (ch != ch_lower) {
-                        auto result_lower = children->find(ch_lower);
-                        if (result_lower != children->end()) {
-                            result_lower->second->find_words(vec, pattern, index + 1, 0, limit, cursor);
+                        auto result_lower = children.find(ch_lower);
+                        if (result_lower != children.end()) {
+                            (*result_lower)->second->get()->find_words(vec, pattern, index + 1, 0, limit, cursor);
                         }
                     }
                 }
@@ -144,21 +152,25 @@ namespace crossword {
                 valid_word = std::move(other->valid_word);
             }
 
-            if (other->children) {
-                if (!children) {
+            if (other->has_children()) {
+                if (!has_children()) {
                     children = std::move(other->children);
                 } else {
                     std::vector<std::pair<char, std::unique_ptr<WordNode>>> buffer;
-                    for (auto &other_child : *other->children) {
-                        auto result = children->find(other_child.first);
-                        if (result == children->end()) {
-                            buffer.emplace_back(std::move(other_child));
+                    for (auto other_child : other->children) {
+                        auto result = children.find(other_child.get()->first);
+                        if (result == children.end()) {
+                            auto other_key = other_child.get()->first;
+                            auto other_node = std::move(*other_child.get()->second);
+                            buffer.emplace_back(std::make_pair(other_key, std::move(other_node)));
                         } else {
-                            result->second->merge(other_child.second.get());
+                            auto this_node = (*(*result)->second).get();
+                            auto other_node = (*other_child.get()->second).get();
+                            this_node->merge(other_node);
                         }
                     }
                     for (auto &pair : buffer) {
-                        children->try_emplace(pair.first, std::move(pair.second));
+                        children.try_emplace(pair.first, std::move(pair.second));
                     }
                 }
             }

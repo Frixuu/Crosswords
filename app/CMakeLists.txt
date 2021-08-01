@@ -1,7 +1,6 @@
 cmake_minimum_required(VERSION 3.4.1)
 
 set(CMAKE_VERBOSE_MAKEFILE on)
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O3")
 
 find_library( log-lib log )
 find_library( android-lib android )

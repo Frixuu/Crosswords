@@ -32,6 +32,13 @@ namespace crossword::utils {
         if (codepoint_is_four_bytes(b)) return 4;
         return -1;
     }
+
+    constexpr unsigned char to_lower(const unsigned char a) {
+        if (a >= 65 && a <= 90) {
+            return a + 32;
+        }
+        return a;
+    }
 }
 
 #endif //CROSSWORD_HELPER_UTF8_HPP
