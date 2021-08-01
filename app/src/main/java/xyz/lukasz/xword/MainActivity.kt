@@ -15,6 +15,8 @@ import com.google.android.material.tabs.TabLayout
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import org.joda.time.Instant
+import java.text.Collator
+import java.util.*
 
 class MainActivity : AppCompatActivity() {
 
@@ -67,8 +69,11 @@ class MainActivity : AppCompatActivity() {
                     val results = currentDict.findPartial(s.toString(), null, limit)
                     synchronized (currentThreadLock) {
                         if (currentThread == mostRecentThread) {
+                            val cursor = results.lastOrNull()
+                            val resultList = mutableListOf(*results)
+                            Collections.sort(resultList, Collator.getInstance())
                             runOnUiThread {
-                                recyclerView.adapter = WordAdapter(results, recyclerView)
+                                recyclerView.adapter = WordAdapter(resultList, recyclerView)
                                 if (results.size >= limit) {
                                     val message = view.resources.getText(R.string.search_showing_only).toString()
                                     Snackbar.make(view,

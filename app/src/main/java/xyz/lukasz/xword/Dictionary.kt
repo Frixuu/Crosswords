@@ -39,12 +39,12 @@ class Dictionary {
      * For example, a pattern ".ró." would match "drób", "próg" and "król".
      * @param limit How many strings can be returned at most, a negative value means all of them.
      */
-    fun findPartial(pattern: String, cursor: String? = null, limit: Int = -1): List<String> {
-        assert(limit <= 500)
+    fun findPartial(pattern: String, cursor: String? = null, limit: Int = -1): Array<String> {
+        assert(limit <= 500) { "Limit too high, possible JNI reference table overflow" }
         return if (isLoaded()) {
-            listOf(*findPartialNative(nativePtr, pattern.lowercase(), cursor, limit))
+            findPartialNative(nativePtr, pattern.lowercase(), cursor, limit)
         } else {
-            emptyList()
+            emptyArray()
         }
     }
 
