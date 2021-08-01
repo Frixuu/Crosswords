@@ -1,11 +1,14 @@
 #include <android/asset_manager.h>
 #include <android/asset_manager_jni.h>
+#include <android/log.h>
 #include <jni.h>
 #include <string>
 #include "dictionary.hpp"
-#include "string_utils.hpp"
+#include "utils/android.hpp"
+#include "utils/utf8.hpp"
 
-using namespace crossword;
+using namespace crossword::utils;
+using crossword::Dictionary;
 
 extern "C" JNIEXPORT jint JNICALL
 Java_xyz_lukasz_xword_MainActivity_fooFromNative([[maybe_unused]] JNIEnv *env,
@@ -47,12 +50,8 @@ Java_xyz_lukasz_xword_Dictionary_loadNative(JNIEnv *env,
         }
     }
 
-    // auto item_count = dictionary->calculate_size();
-    // __android_log_buf_print(LOG_ID_MAIN,
-    //                        ANDROID_LOG_INFO,
-    //                        "NATIVE",
-    //                        "Dictionary claims to have %d items",
-    //                        item_count);
+    auto size = dictionary->calculate_size();
+    android::infof("Dictionary reports %d elements.", size);
 
     AAsset_close(asset);
     env->ReleaseStringUTFChars(path, filename);
@@ -69,8 +68,8 @@ Java_xyz_lukasz_xword_Dictionary_findPartialNative(JNIEnv *env,
                                                    jint limit) {
 
     // Marshal Java arguments to native
-    auto word = crossword::utils::string_from_java(env, jword);
-    auto cursor = crossword::utils::string_from_java(env, jcursor);
+    auto word = android::string_from_java(env, jword);
+    auto cursor = android::string_from_java(env, jcursor);
     auto dictionary = reinterpret_cast<Dictionary *>(native_ptr);
 
     // Find all the matching words

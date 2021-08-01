@@ -6,7 +6,7 @@
 #include <thread>
 #include <vector>
 #include "word_node.hpp"
-#include "string_utils.hpp"
+#include "utils/utf8.hpp"
 
 namespace crossword {
 

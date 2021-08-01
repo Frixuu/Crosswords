@@ -3,7 +3,7 @@
 
 #include <map>
 #include <string>
-#include "string_utils.hpp"
+#include "utils/utf8.hpp"
 
 namespace crossword {
 
@@ -77,8 +77,8 @@ namespace crossword {
         /// Find words matching a provided pattern.
         /// All matching words will be added to the passed vector.
         /// If limit > 0, only n words will be added.
-        /// If a cursor value is provided and children are sorted,
-        /// starts search from that cursor value.
+        /// If a cursor value is provided, assuming children are sorted,
+        /// starts search from that cursor value (TODO).
         void find_words(std::vector<std::string> &vec,
                         const std::string &pattern,
                         size_t index,
@@ -90,6 +90,7 @@ namespace crossword {
             if (point_offset > 0) {
                 auto offset = point_offset - 1;
                 for (const auto &entry : *children) {
+                    // The wildcard is a single character, do not increment index
                     entry.second->find_words(vec, pattern, index, offset, limit, cursor);
                 }
                 return;
@@ -128,9 +129,9 @@ namespace crossword {
                     }
                     auto ch_lower = tolower(ch);
                     if (ch != ch_lower) {
-                        auto result = children->find(ch_lower);
-                        if (result != children->end()) {
-                            result->second->find_words(vec, pattern, index + 1, 0, limit, cursor);
+                        auto result_lower = children->find(ch_lower);
+                        if (result_lower != children->end()) {
+                            result_lower->second->find_words(vec, pattern, index + 1, 0, limit, cursor);
                         }
                     }
                 }

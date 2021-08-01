@@ -1,23 +1,9 @@
-#ifndef CROSSWORD_HELPER_STRING_UTILS_HPP
-#define CROSSWORD_HELPER_STRING_UTILS_HPP
+#ifndef CROSSWORD_HELPER_UTF8_HPP
+#define CROSSWORD_HELPER_UTF8_HPP
 
 #include <string>
-#include <jni.h>
 
 namespace crossword::utils {
-
-    /// Copies contents of a Java string into a new std::string.
-    std::string string_from_java(JNIEnv *env, jstring jstr) {
-        if (jstr != nullptr) {
-            auto char_ptr = env->GetStringUTFChars(jstr, 0);
-            auto str = std::string(char_ptr);
-            env->ReleaseStringUTFChars(jstr, char_ptr);
-            return str;
-        } else {
-            return std::string();
-        }
-    }
-
 
     constexpr bool codepoint_is_one_byte(const unsigned char b) {
         return b < 0b10000000;
@@ -48,4 +34,4 @@ namespace crossword::utils {
     }
 }
 
-#endif //CROSSWORD_HELPER_STRING_UTILS_HPP
+#endif //CROSSWORD_HELPER_UTF8_HPP
