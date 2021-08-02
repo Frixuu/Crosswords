@@ -46,6 +46,8 @@
 
                     <com.google.android.material.textfield.TextInputEditText
                         android:id="@+id/user_input_edittext"
+                        android:inputType="text"
+                        android:imeOptions="actionNone"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:paddingTop="12dp" />
