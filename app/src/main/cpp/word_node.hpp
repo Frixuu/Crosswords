@@ -133,13 +133,13 @@ namespace crossword {
                 } else {
                     auto result = children.find(ch);
                     if (result != children.end()) {
-                        (*result)->second->get()->find_words(vec, pattern, index + 1, 0, limit, cursor);
+                        result.get_element().second->get()->find_words(vec, pattern, index + 1, 0, limit, cursor);
                     }
                     auto ch_lower = utils::to_lower(ch);
                     if (ch != ch_lower) {
                         auto result_lower = children.find(ch_lower);
                         if (result_lower != children.end()) {
-                            (*result_lower)->second->get()->find_words(vec, pattern, index + 1, 0, limit, cursor);
+                            (*result_lower.get_element().second).get()->find_words(vec, pattern, index + 1, 0, limit, cursor);
                         }
                     }
                 }
@@ -164,7 +164,7 @@ namespace crossword {
                             auto other_node = std::move(*other_child.get()->second);
                             buffer.emplace_back(std::make_pair(other_key, std::move(other_node)));
                         } else {
-                            auto this_node = (*(*result)->second).get();
+                            auto this_node = (*result.get_element().second).get();
                             auto other_node = (*other_child.get()->second).get();
                             this_node->merge(other_node);
                         }

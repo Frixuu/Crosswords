@@ -29,7 +29,7 @@ namespace crossword::collections {
     class chunked_map_iterator {
 
     protected:
-    
+
         chunked_map<V> *map;
         int16_t index;
 
@@ -188,7 +188,7 @@ namespace crossword::collections {
             return iterator(this, size);
         }
 
-        iterator find(char key) {
+        inline iterator find_naive(char key) {
             auto it = begin();
             for (; it != end(); ++it) {
                 if (it.get_element().first == key) {
@@ -196,6 +196,34 @@ namespace crossword::collections {
                 }
             }
             return it;
+        }
+
+        inline iterator find_chunk_linear(char key) {
+            int16_t chunk_index = 0;
+            int16_t index_inner = 0;
+            int16_t full_index = 0;
+            int16_t allocated_chunks = capacity / 3;
+            while (chunk_index < allocated_chunks) {
+                auto chunk = &chunks[chunk_index];
+                if (chunk->key1 == key) {
+                    index_inner = 0;
+                    break;
+                } else if (chunk->key2 == key) {
+                    index_inner = 1;
+                    break;
+                } else if (chunk->key3 == key) {
+                    index_inner = 2;
+                    break;
+                }
+                ++chunk_index;
+            }
+
+            full_index = std::min(static_cast<int16_t>(chunk_index * 3 + index_inner), size);
+            return iterator(this, full_index);
+        }
+
+        iterator find(char key) {
+            return find_chunk_linear(key);
         }
 
         std::pair<std::pair<char, std::unique_ptr<V>*>, bool> try_emplace(
