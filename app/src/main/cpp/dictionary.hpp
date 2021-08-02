@@ -53,9 +53,14 @@ namespace crossword {
         Dictionary() : forward_index(std::make_unique<WordNode>()) {
         }
 
+        Dictionary(const Dictionary &) = delete;
+        Dictionary(Dictionary &&) = delete;
+        Dictionary &operator=(const Dictionary &) = delete;
+        Dictionary &operator=(Dictionary &&) = delete;
+
         void find_words(std::vector<std::string> &vec,
                         const std::string &pattern,
-                        size_t limit,
+                        int32_t limit,
                         const std::string &cursor) {
 
             forward_index->find_words(vec, pattern, 0, 0, limit, cursor);
@@ -69,6 +74,10 @@ namespace crossword {
             return forward_index->calculate_size();
         }
 
+        size_t count_nodes() {
+            return forward_index->count_nodes();
+        }
+
         /// Puts words in this dictionary, using multiple threads.
         /// @param buffer Buffer to UTF-8 data
         /// @param length Length of the buffer
@@ -77,7 +86,7 @@ namespace crossword {
             std::vector<std::thread> loading_threads;
             std::vector<std::unique_ptr<Dictionary>> result_dictionaries;
 
-            int indices[par_count];
+            auto indices = std::make_unique<int[]>(par_count);
             indices[0] = 0;
 
             // Split the buffer into chunks, one for every thread
@@ -117,8 +126,15 @@ namespace crossword {
             }
 
             for (auto &dict : result_dictionaries) {
+                // std::cout
+                //     << " - " << dict->calculate_size() << " words, "
+                //     << dict->count_nodes() << " nodes" << std::endl;
                 merge(dict.get());
             }
+
+            // std::cout << "======================" << std::endl
+            //         << " - " << calculate_size() << " words, "
+            //         << count_nodes() << " nodes" << std::endl;
         }
     };
 }

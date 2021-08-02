@@ -11,7 +11,7 @@ namespace crossword {
     /// A node in an index representing set of strings.
     struct WordNode {
 
-        std::string valid_word;
+        std::unique_ptr<std::string> valid_word;
         collections::chunked_map<WordNode> children;
 
         /// Creates a new WordNode representing an invalid word.
@@ -20,11 +20,13 @@ namespace crossword {
 
         WordNode(const WordNode&& other) = delete;
         WordNode& operator=(const WordNode& other) = delete;
+        WordNode(WordNode&& other) = delete;
+        WordNode& operator=(WordNode&& other) = delete;
 
         /// Determines whether this node represents a valid word.
         /// This only makes sense in context of a particular tree index.
         bool valid() const noexcept {
-            return !valid_word.empty();
+            return valid_word != nullptr;
         }
 
         bool has_children() const noexcept {
@@ -71,10 +73,10 @@ namespace crossword {
                 if (index < (word_length - 1)) {
                     return entry.second->get()->push_word(std::move(str), index + 1);
                 } else {
-                    entry.second->get()->valid_word = std::move(str);
+                    entry.second->get()->valid_word = std::make_unique<std::string>(std::move(str));
                 }
             } else if (index == word_length) {
-                valid_word = std::move(str);
+                valid_word = std::make_unique<std::string>(std::move(str));
             } else {
                 return false;
             }
@@ -111,7 +113,7 @@ namespace crossword {
 
             if (index == pattern.length()) {
                 if (valid()) {
-                    auto word_copy = valid_word;
+                    auto word_copy = *(valid_word.get());
                     vec.emplace_back(std::move(word_copy));
                 }
                 return;
