@@ -4,4 +4,7 @@
     <string name="input_box">Wpisz szukany wyraz bądź jego część</string>
     <string name="input_query">Szukaj</string>
     <string name="search_showing_only">Wyświetlam tylko %d pierwszych wyników</string>
+    <string name="tab_missing_letters">Brak. litery</string>
+    <string name="tab_rhymes">Rymy</string>
+    <string name="tab_anagrams">Anagramy</string>
 </resources>

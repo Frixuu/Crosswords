@@ -3,4 +3,7 @@
     <string name="input_box">Enter a word or its fragment</string>
     <string name="input_query">Search</string>
     <string name="search_showing_only">Showing only %d first results</string>
+    <string name="tab_missing_letters">Missing letters</string>
+    <string name="tab_rhymes">Rhymes</string>
+    <string name="tab_anagrams">Anagrams</string>
 </resources>

@@ -70,31 +70,19 @@
             <com.google.android.material.tabs.TabItem
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="string/tab_1"
+                android:text="@string/tab_missing_letters"
                 />
 
             <com.google.android.material.tabs.TabItem
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="string/tab_2"
+                android:text="@string/tab_anagrams"
                 />
 
             <com.google.android.material.tabs.TabItem
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="string/tab_3"
-                />
-
-            <com.google.android.material.tabs.TabItem
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="string/tab_4"
-                />
-
-            <com.google.android.material.tabs.TabItem
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="string/tab_5"
+                android:text="@string/tab_rhymes"
                 />
 
         </com.google.android.material.tabs.TabLayout>
