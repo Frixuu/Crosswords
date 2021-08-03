@@ -2,6 +2,7 @@
 #define CROSSWORD_HELPER_UTF8_HPP
 
 #include <string>
+#include "macros.hpp"
 
 namespace crossword::utils {
 
@@ -34,9 +35,7 @@ namespace crossword::utils {
     }
 
     constexpr unsigned char to_lower(const unsigned char a) {
-        if (a >= 65 && a <= 90) {
-            return a + 32;
-        }
+        if (a >= 65 && a <= 90) return a + 32;
         return a;
     }
 }

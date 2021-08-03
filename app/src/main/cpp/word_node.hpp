@@ -5,6 +5,8 @@
 #include <string>
 #include "collections/chunked_map.hpp"
 #include "utils/utf8.hpp"
+#include "utils/macros.hpp"
+#include "utils/memory_pool.hpp"
 
 namespace crossword {
 
@@ -40,7 +42,7 @@ namespace crossword {
             }
             if (has_children()) {
                 for (const auto &entry : children) {
-                    count += entry->second->get()->calculate_size();
+                    count += entry.second->calculate_size();
                 }
             }
             return count;
@@ -50,7 +52,7 @@ namespace crossword {
             size_t count = 1;
             if (has_children()) {
                 for (const auto &entry : children) {
-                    count += entry->second->get()->count_nodes();
+                    count += entry.second->count_nodes();
                 }
             }
             return count;
@@ -59,7 +61,7 @@ namespace crossword {
         /// Pushes a word deep down the index.
         /// @param str Word being pushed into the index.
         /// @param index Current index depth.
-        bool push_word(std::string &&str, size_t index) {
+        bool push_word(std::string &&str, size_t index, utils::memory_pool<WordNode> *pool) {
 
             auto word_length = str.length();
             if (index < word_length) {
@@ -69,13 +71,17 @@ namespace crossword {
                     key = utils::to_lower(key);
                 }
 
-                auto [entry, _] = children.try_emplace(key, std::make_unique<WordNode>());
-                if (index < (word_length - 1)) {
-                    return entry.second->get()->push_word(std::move(str), index + 1);
-                } else {
-                    entry.second->get()->valid_word = std::make_unique<std::string>(std::move(str));
+                auto [entry, inserted] = children.try_emplace(key, pool->alloc());
+                if (!inserted) {
+                    pool->dealloc_last();
                 }
-            } else if (index == word_length) {
+
+                if (index < (word_length - 1)) {
+                    return entry.second->push_word(std::move(str), index + 1, pool);
+                } else {
+                    entry.second->valid_word = std::make_unique<std::string>(std::move(str));
+                }
+            } else if (LIKELY(index == word_length)) {
                 valid_word = std::make_unique<std::string>(std::move(str));
             } else {
                 return false;
@@ -101,7 +107,7 @@ namespace crossword {
                 auto offset = point_offset - 1;
                 for (auto entry : children) {
                     // The wildcard is a single character, do not increment index
-                    entry->second->get()->find_words(vec, pattern, index, offset, limit, cursor);
+                    entry.second->find_words(vec, pattern, index, offset, limit, cursor);
                 }
                 return;
             }
@@ -123,25 +129,25 @@ namespace crossword {
                 auto ch = pattern.at(index);
                 if (ch == '.') {
                     for (const auto &entry : children) {
-                        auto key = entry->first;
+                        auto key = entry.first;
 
                         auto offset = 0;
                         if (!utils::codepoint_is_continuation(key)) {
                             offset = utils::codepoint_size(key) - 1;
                         }
 
-                        entry->second->get()->find_words(vec, pattern, index + 1, offset, limit, cursor);
+                        entry.second->find_words(vec, pattern, index + 1, offset, limit, cursor);
                     }
                 } else {
                     auto result = children.find(ch);
                     if (result != children.end()) {
-                        result.get_element().second->get()->find_words(vec, pattern, index + 1, 0, limit, cursor);
+                        result.get_element().second->find_words(vec, pattern, index + 1, 0, limit, cursor);
                     }
                     auto ch_lower = utils::to_lower(ch);
                     if (ch != ch_lower) {
                         auto result_lower = children.find(ch_lower);
                         if (result_lower != children.end()) {
-                            (*result_lower.get_element().second).get()->find_words(vec, pattern, index + 1, 0, limit, cursor);
+                            result_lower.get_element().second->find_words(vec, pattern, index + 1, 0, limit, cursor);
                         }
                     }
                 }
@@ -158,21 +164,21 @@ namespace crossword {
                 if (!has_children()) {
                     children = std::move(other->children);
                 } else {
-                    std::vector<std::pair<char, std::unique_ptr<WordNode>>> buffer;
+                    std::vector<std::pair<char, WordNode*>> buffer;
                     for (auto other_child : other->children) {
-                        auto result = children.find(other_child.get()->first);
+                        auto result = children.find(other_child.first);
                         if (result == children.end()) {
-                            auto other_key = other_child.get()->first;
-                            auto other_node = std::move(*other_child.get()->second);
-                            buffer.emplace_back(std::make_pair(other_key, std::move(other_node)));
+                            auto other_key = other_child.first;
+                            auto other_node = other_child.second;
+                            buffer.emplace_back(std::make_pair(other_key, other_node));
                         } else {
-                            auto this_node = (*result.get_element().second).get();
-                            auto other_node = (*other_child.get()->second).get();
+                            auto this_node = result.get_element().second;
+                            auto other_node = other_child.second;
                             this_node->merge(other_node);
                         }
                     }
                     for (auto &pair : buffer) {
-                        children.try_emplace(pair.first, std::move(pair.second));
+                        children.try_emplace(pair.first, pair.second);
                     }
                 }
             }

@@ -2,6 +2,7 @@
 #define CROSSWORD_HELPER_CHUNKED_MAP_HPP
 
 #include <algorithm>
+#include <functional>
 #include <iterator>
 #include <memory>
 
@@ -9,8 +10,11 @@ namespace crossword::collections {
 
     template <typename V>
     struct map_chunk {
+
+        typedef V* pointer_type;
+
         char key1, key2, key3;
-        std::unique_ptr<V> value1, value2, value3;
+        pointer_type value1, value2, value3;
 
         map_chunk() {
             key1 = key2 = key3 = 0;
@@ -18,8 +22,6 @@ namespace crossword::collections {
             value2 = nullptr;
             value3 = nullptr;
         };
-
-        map_chunk(const map_chunk& other) = delete;
     };
 
     template <typename V>
@@ -38,7 +40,7 @@ namespace crossword::collections {
         using iterator_category = std::random_access_iterator_tag;
         using difference_type = int16_t;
 
-        typedef std::pair<char, std::unique_ptr<V>*> element_type;
+        typedef std::pair<char, V*> element_type;
 
         chunked_map_iterator(chunked_map<V> *map, int16_t index) : map(map), index(index) { }
         chunked_map_iterator(const chunked_map_iterator &other) = default;
@@ -107,15 +109,15 @@ namespace crossword::collections {
             switch (index_inner) {
                 case 0:
                     element->first = chunk->key1;
-                    element->second = &chunk->value1;
+                    element->second = chunk->value1;
                     break;
                 case 1:
                     element->first = chunk->key2;
-                    element->second = &chunk->value2;
+                    element->second = chunk->value2;
                     break;
                 case 2:
                     element->first = chunk->key3;
-                    element->second = &chunk->value3;
+                    element->second = chunk->value3;
                     break;
                 default:
                     break;
@@ -128,16 +130,9 @@ namespace crossword::collections {
             return pair;
         }
 
-        element_type operator->() {
+        element_type operator*() {
             return get_element();
         }
-
-        std::unique_ptr<element_type> operator *() {
-            auto ptr = std::make_unique<element_type>();
-            fill_element(ptr.get());
-            return ptr;
-        }
-
     };
 
     template <typename V>
@@ -158,13 +153,7 @@ namespace crossword::collections {
             auto new_chunks = std::make_unique<map_chunk<V>[]>(old_chunk_count + 1);
             if (capacity > 0) {
                 for (auto i = 0; i < old_chunk_count; ++i) {
-                    auto old_chunk = &chunks[i];
-                    new_chunks[i].key1 = old_chunk->key1;
-                    new_chunks[i].key2 = old_chunk->key2;
-                    new_chunks[i].key3 = old_chunk->key3;
-                    new_chunks[i].value1.swap(old_chunk->value1);
-                    new_chunks[i].value2.swap(old_chunk->value2);
-                    new_chunks[i].value3.swap(old_chunk->value3);
+                    new_chunks[i] = chunks[i];
                 }
             }
             chunks.swap(new_chunks);
@@ -226,9 +215,9 @@ namespace crossword::collections {
             return find_chunk_linear(key);
         }
 
-        std::pair<std::pair<char, std::unique_ptr<V>*>, bool> try_emplace(
+        std::pair<std::pair<char, V*>, bool> try_emplace(
             char key,
-            std::unique_ptr<V>&& value) {
+            V* value) {
 
             auto it = find(key);
             if (it != end()) {
@@ -245,15 +234,15 @@ namespace crossword::collections {
             switch (index_inner) {
                 case 0:
                     chunk->key1 = key;
-                    chunk->value1 = std::move(value);
+                    chunk->value1 = value;
                     break;
                 case 1:
                     chunk->key2 = key;
-                    chunk->value2 = std::move(value);
+                    chunk->value2 = value;
                     break;
                 case 2:
                     chunk->key3 = key;
-                    chunk->value3 = std::move(value);
+                    chunk->value3 = value;
                     break;
                 default:
                     break;

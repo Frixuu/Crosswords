@@ -7,6 +7,8 @@
 #include <vector>
 #include "word_node.hpp"
 #include "utils/utf8.hpp"
+#include "utils/macros.hpp"
+#include "utils/memory_pool.hpp"
 
 namespace crossword {
 
@@ -17,6 +19,7 @@ namespace crossword {
     private:
 
         std::unique_ptr<WordNode> forward_index;
+        std::unique_ptr<utils::memory_pool<WordNode>> node_pool;
 
         /// Parses lines from a UTF-8 encoded buffer and adds them to the dictionary.
         /// @param buffer Pointer to the data buffer.
@@ -24,6 +27,13 @@ namespace crossword {
         /// @param end Exclusive end index of buffer parsing.
         void load_from_buffer(const char *buffer, size_t start, size_t end) {
             std::vector<char> line_buffer;
+
+            // Cache not to lookup first parent
+            char last_first_byte = 'a';
+            auto last_ancestor = forward_index->children
+                .try_emplace('a', node_pool->alloc())
+                .first.second;
+
             auto index = start;
             while (index < end) {
                 auto byte = buffer[index++];
@@ -31,10 +41,19 @@ namespace crossword {
                     line_buffer.emplace_back(byte);
                 } else {
                     // CRLF sequences and multiple line breaks are valid
-                    if (!line_buffer.empty()) {
+                    if (LIKELY(!line_buffer.empty())) {
                         auto word = std::string(line_buffer.begin(), line_buffer.end());
+                        auto first_letter = utils::to_lower(line_buffer[0]);
                         line_buffer.clear();
-                        forward_index->push_word(std::move(word), 0);
+                        if (LIKELY(utils::to_lower(line_buffer[0]) == last_first_byte)) {
+                            last_ancestor->push_word(std::move(word), 1, node_pool.get());
+                        } else {
+                            last_first_byte = first_letter;
+                            last_ancestor = forward_index->children
+                                .try_emplace(first_letter, node_pool->alloc())
+                                .first.second;
+                            last_ancestor->push_word(std::move(word), 1, node_pool.get());
+                        }
                     }
                 }
             }
@@ -43,20 +62,27 @@ namespace crossword {
             // push the remaining chars
             if (!line_buffer.empty()) {
                 auto word = std::string(line_buffer.begin(), line_buffer.end());
-                forward_index->push_word(std::move(word), 0);
+                forward_index->push_word(std::move(word), 0, node_pool.get());
             }
         }
 
     public:
 
         /// Creates a new, empty Dictionary.
-        Dictionary() : forward_index(std::make_unique<WordNode>()) {
+        Dictionary() :
+            forward_index(std::make_unique<WordNode>()),
+            node_pool(std::make_unique<utils::memory_pool<WordNode>>()) {
         }
 
         Dictionary(const Dictionary &) = delete;
         Dictionary(Dictionary &&) = delete;
         Dictionary &operator=(const Dictionary &) = delete;
         Dictionary &operator=(Dictionary &&) = delete;
+
+        ~Dictionary() {
+            forward_index.reset();
+            node_pool.reset();
+        }
 
         void find_words(std::vector<std::string> &vec,
                         const std::string &pattern,
@@ -68,6 +94,7 @@ namespace crossword {
 
         void merge(Dictionary *other) {
             forward_index->merge(other->forward_index.get());
+            node_pool->merge_pools(other->node_pool.get());
         }
 
         size_t calculate_size() {
@@ -133,7 +160,7 @@ namespace crossword {
             }
 
             // std::cout << "======================" << std::endl
-            //         << " - " << calculate_size() << " words, "
+            //          << " - " << calculate_size() << " words, "
             //         << count_nodes() << " nodes" << std::endl;
         }
     };

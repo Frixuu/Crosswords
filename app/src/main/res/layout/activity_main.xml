@@ -20,7 +20,9 @@
 
             <androidx.appcompat.widget.LinearLayoutCompat
                 android:layout_width="match_parent"
-                android:layout_height="match_parent">
+                android:layout_height="match_parent"
+                android:focusableInTouchMode="true"
+                >
 
                 <com.google.android.material.textfield.TextInputLayout
                     android:id="@+id/user_input_layout"
@@ -91,6 +93,7 @@
 
 
 
+
     <!-- Note: A RecyclerView can also be used -->
     <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
@@ -103,5 +106,26 @@
             android:layout_height="match_parent" />
 
     </androidx.core.widget.NestedScrollView>
+
+    <!--
+    <FrameLayout
+        android:clickable="true"
+        android:focusable="true"
+        android:alpha="0.4"
+        android:animateLayoutChanges="true"
+        android:background="@android:color/black"
+        android:visibility="visible"
+        android:layout_gravity="center"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent">
+
+        <com.google.android.material.progressindicator.CircularProgressIndicator
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:indeterminate="true"
+            app:indicatorSize="64dp" />
+    </FrameLayout>
+    -->
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>
