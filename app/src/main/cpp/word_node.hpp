@@ -13,11 +13,11 @@ namespace crossword {
     /// A node in an index representing set of strings.
     struct WordNode {
 
-        std::unique_ptr<std::string> valid_word;
+        std::string* valid_word;
         collections::chunked_map<WordNode> children;
 
         /// Creates a new WordNode representing an invalid word.
-        WordNode() {
+        WordNode() : valid_word(nullptr) {
         }
 
         WordNode(const WordNode&& other) = delete;
@@ -61,15 +61,15 @@ namespace crossword {
         /// Pushes a word deep down the index.
         /// @param str Word being pushed into the index.
         /// @param index Current index depth.
-        bool push_word(std::string &&str,
+        bool push_word(std::string* str,
                        size_t index,
                        utils::memory_pool<WordNode> *node_pool,
                        utils::memory_pool<collections::map_chunk<WordNode>> *chunk_pool) {
 
-            auto word_length = str.length();
+            auto word_length = str->length();
             if (index < word_length) {
 
-                auto key = str.at(index);
+                auto key = str->at(index);
                 if (utils::codepoint_is_one_byte(key)) {
                     key = utils::to_lower(key);
                 }
@@ -80,12 +80,12 @@ namespace crossword {
                 }
 
                 if (index < (word_length - 1)) {
-                    return entry.second->push_word(std::move(str), index + 1, node_pool, chunk_pool);
+                    return entry.second->push_word(str, index + 1, node_pool, chunk_pool);
                 } else {
-                    entry.second->valid_word = std::make_unique<std::string>(std::move(str));
+                    entry.second->valid_word = str;
                 }
             } else if (LIKELY(index == word_length)) {
-                valid_word = std::make_unique<std::string>(std::move(str));
+                valid_word = str;
             } else {
                 return false;
             }
@@ -122,7 +122,7 @@ namespace crossword {
 
             if (index == pattern.length()) {
                 if (valid()) {
-                    auto word_copy = *(valid_word.get());
+                    auto word_copy = *valid_word;
                     vec.emplace_back(std::move(word_copy));
                 }
                 return;
@@ -161,7 +161,7 @@ namespace crossword {
                    utils::memory_pool<collections::map_chunk<WordNode>> *chunk_pool) {
 
             if (other->valid()) {
-                valid_word = std::move(other->valid_word);
+                valid_word = other->valid_word;
             }
 
             if (other->has_children()) {

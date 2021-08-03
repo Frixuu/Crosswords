@@ -14,6 +14,9 @@
 
 namespace crossword {
 
+    using namespace ::crossword::collections;
+    using namespace ::crossword::utils;
+
     /// Stores a set of words from a particular language in forms
     /// that allow for easy indexing.
     class Dictionary {
@@ -21,14 +24,17 @@ namespace crossword {
     private:
 
         std::unique_ptr<WordNode> forward_index;
-        std::unique_ptr<utils::memory_pool<WordNode>> node_pool;
-        std::unique_ptr<utils::memory_pool<collections::map_chunk<WordNode>>> chunk_pool;
+        std::unique_ptr<memory_pool<WordNode>> node_pool;
+        std::unique_ptr<memory_pool<map_chunk<WordNode>>> chunk_pool;
+        std::unique_ptr<memory_pool<std::string>> string_pool;
 
         /// Parses lines from a UTF-8 encoded buffer and adds them to the dictionary.
         /// @param buffer Pointer to the data buffer.
         /// @param start Index to start searching from.
         /// @param end Exclusive end index of buffer parsing.
         void load_from_buffer(const char *buffer, size_t start, size_t end) {
+
+            // Stores contents of the current line so far
             std::vector<char> line_buffer;
 
             // Cache not to lookup first parent
@@ -39,23 +45,33 @@ namespace crossword {
 
             auto index = start;
             while (index < end) {
+                // Read the buffer forward
                 auto byte = buffer[index++];
                 if (byte != '\n' && byte != '\r') {
                     line_buffer.emplace_back(byte);
                 } else {
-                    // CRLF sequences and multiple line breaks are valid
+
+                    // CRLF sequences and multiple line breaks are valid,
+                    // but since we control the input, we know that's pretty rare
                     if (LIKELY(!line_buffer.empty())) {
-                        auto word = std::string(line_buffer.begin(), line_buffer.end());
-                        auto first_letter = utils::to_lower(line_buffer[0]);
+
+                        // Most of the words are short enough to be inlined
+                        auto word_ptr = string_pool->alloc();
+                        *word_ptr = std::string(line_buffer.begin(), line_buffer.end());
+                        auto first_letter = to_lower(line_buffer[0]);
                         line_buffer.clear();
-                        if (LIKELY(utils::to_lower(line_buffer[0]) == last_first_byte)) {
-                            last_ancestor->push_word(std::move(word), 1, node_pool.get(), chunk_pool.get());
+
+                        // The input is pre-sorted, so we usually get the cached parent
+                        if (LIKELY(to_lower(line_buffer[0]) == last_first_byte)) {
+                            last_ancestor->push_word(word_ptr, 1, node_pool.get(), chunk_pool.get());
                         } else {
+                            // The first letter has changed,
+                            // next words will use the new parent
                             last_first_byte = first_letter;
                             last_ancestor = forward_index->children
                                 .try_emplace(first_letter, node_pool->alloc(), chunk_pool.get())
                                 .first.second;
-                            last_ancestor->push_word(std::move(word), 1, node_pool.get(), chunk_pool.get());
+                            last_ancestor->push_word(word_ptr, 1, node_pool.get(), chunk_pool.get());
                         }
                     }
                 }
@@ -64,8 +80,9 @@ namespace crossword {
             // In case the buffer did not end with a new line,
             // push the remaining chars
             if (!line_buffer.empty()) {
-                auto word = std::string(line_buffer.begin(), line_buffer.end());
-                forward_index->push_word(std::move(word), 0, node_pool.get(), chunk_pool.get());
+                auto word_ptr = string_pool->alloc();
+                *word_ptr = std::string(line_buffer.begin(), line_buffer.end());
+                forward_index->push_word(word_ptr, 0, node_pool.get(), chunk_pool.get());
             }
         }
 
@@ -74,8 +91,9 @@ namespace crossword {
         /// Creates a new, empty Dictionary.
         Dictionary() :
             forward_index(std::make_unique<WordNode>()),
-            node_pool(std::make_unique<utils::memory_pool<WordNode>>()),
-            chunk_pool(std::make_unique<utils::memory_pool<collections::map_chunk<WordNode>>>()) {
+            node_pool(std::make_unique<memory_pool<WordNode>>()),
+            chunk_pool(std::make_unique<memory_pool<map_chunk<WordNode>>>()),
+            string_pool(std::make_unique<memory_pool<std::string>>()) {
         }
 
         Dictionary(const Dictionary &) = delete;
@@ -87,6 +105,7 @@ namespace crossword {
             forward_index.reset();
             node_pool.reset();
             chunk_pool.reset();
+            string_pool.reset();
         }
 
         void find_words(std::vector<std::string> &vec,
@@ -101,6 +120,7 @@ namespace crossword {
             forward_index->merge(other->forward_index.get(), chunk_pool.get());
             node_pool->merge_pools(other->node_pool.get());
             chunk_pool->merge_pools(other->chunk_pool.get());
+            string_pool->merge_pools(other->string_pool.get());
         }
 
         size_t calculate_size() {
@@ -122,7 +142,7 @@ namespace crossword {
             auto indices = std::make_unique<int[]>(par_count);
             indices[0] = 0;
 
-            // Split the buffer into chunks, one for every thread
+            // Split the buffer into chunks
             for (int i = 1; i < par_count; i++) {
 
                 // Since we do not know the word length distribution,
@@ -140,6 +160,7 @@ namespace crossword {
                 }
             }
 
+            // Spawn a thread for every chunk
             for (auto i = 0; i < par_count; i++) {
                 int start = indices[i];
                 int end = length;
@@ -147,6 +168,9 @@ namespace crossword {
                     end = indices[i + 1];
                 }
 
+                // Each thread gets their own dictionary,
+                // because merging them is cheaper than locking
+                // and making other threads' caches dirty
                 auto dict = std::make_unique<Dictionary>();
                 auto thread = std::thread(&Dictionary::load_from_buffer, dict.get(), buffer, start, end);
                 loading_threads.emplace_back(std::move(thread));
@@ -158,10 +182,9 @@ namespace crossword {
                 thread.join();
             }
 
+            // Merge the results.
+            // It's pretty cheap as long as the input was at-least k-sorted
             for (auto &dict : result_dictionaries) {
-                // std::cout
-                //     << " - " << dict->calculate_size() << " words, "
-                //     << dict->count_nodes() << " nodes" << std::endl;
                 merge(dict.get());
             }
         }
