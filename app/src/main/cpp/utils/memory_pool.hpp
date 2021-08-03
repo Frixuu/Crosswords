@@ -33,6 +33,15 @@ namespace crossword::utils {
             return x;
         }
 
+        T* alloc(size_t n) {
+            if (UNLIKELY(used + n > size)) {
+                return nullptr;
+            }
+            auto x = data.get() + used;
+            used += n;
+            return x;
+        }
+
         void dealloc_last() {
             --used;
         }
@@ -42,11 +51,17 @@ namespace crossword::utils {
     class memory_pool {
 
     private:
+
+        const size_t typical_size = 8192;
         std::vector<memory_pool_segment<T>> segments;
         size_t current_segment;
 
-        void push_new_segment() {
-            segments.emplace_back(std::move(memory_pool_segment<T>(8192)));
+        inline void push_new_segment() {
+            push_new_segment(0);
+        }
+
+        void push_new_segment(size_t min_size) {
+            segments.emplace_back(std::move(memory_pool_segment<T>(std::max(min_size, typical_size))));
         }
 
         void push_existing_segment(memory_pool_segment<T>&& segment) {
@@ -78,6 +93,20 @@ namespace crossword::utils {
             }
 
             return segment->alloc();
+        }
+
+        T* alloc(size_t n) {
+            auto segment = &segments[current_segment];
+            auto ptr = segment->alloc(n);
+            
+            if (UNLIKELY(ptr == nullptr)) {
+                push_new_segment(n);
+                ++current_segment;
+                segment = &segments[current_segment];
+                ptr = segment->alloc(n);
+            }
+
+            return ptr;
         }
 
         void dealloc_last() {

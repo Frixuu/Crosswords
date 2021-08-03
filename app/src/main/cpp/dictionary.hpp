@@ -1,6 +1,8 @@
 #ifndef CROSSWORD_HELPER_DICTIONARY_HPP
 #define CROSSWORD_HELPER_DICTIONARY_HPP
 
+#include <algorithm>
+#include <atomic>
 #include <map>
 #include <string>
 #include <thread>
@@ -20,6 +22,7 @@ namespace crossword {
 
         std::unique_ptr<WordNode> forward_index;
         std::unique_ptr<utils::memory_pool<WordNode>> node_pool;
+        std::unique_ptr<utils::memory_pool<collections::map_chunk<WordNode>>> chunk_pool;
 
         /// Parses lines from a UTF-8 encoded buffer and adds them to the dictionary.
         /// @param buffer Pointer to the data buffer.
@@ -31,7 +34,7 @@ namespace crossword {
             // Cache not to lookup first parent
             char last_first_byte = 'a';
             auto last_ancestor = forward_index->children
-                .try_emplace('a', node_pool->alloc())
+                .try_emplace('a', node_pool->alloc(), chunk_pool.get())
                 .first.second;
 
             auto index = start;
@@ -46,13 +49,13 @@ namespace crossword {
                         auto first_letter = utils::to_lower(line_buffer[0]);
                         line_buffer.clear();
                         if (LIKELY(utils::to_lower(line_buffer[0]) == last_first_byte)) {
-                            last_ancestor->push_word(std::move(word), 1, node_pool.get());
+                            last_ancestor->push_word(std::move(word), 1, node_pool.get(), chunk_pool.get());
                         } else {
                             last_first_byte = first_letter;
                             last_ancestor = forward_index->children
-                                .try_emplace(first_letter, node_pool->alloc())
+                                .try_emplace(first_letter, node_pool->alloc(), chunk_pool.get())
                                 .first.second;
-                            last_ancestor->push_word(std::move(word), 1, node_pool.get());
+                            last_ancestor->push_word(std::move(word), 1, node_pool.get(), chunk_pool.get());
                         }
                     }
                 }
@@ -62,7 +65,7 @@ namespace crossword {
             // push the remaining chars
             if (!line_buffer.empty()) {
                 auto word = std::string(line_buffer.begin(), line_buffer.end());
-                forward_index->push_word(std::move(word), 0, node_pool.get());
+                forward_index->push_word(std::move(word), 0, node_pool.get(), chunk_pool.get());
             }
         }
 
@@ -71,7 +74,8 @@ namespace crossword {
         /// Creates a new, empty Dictionary.
         Dictionary() :
             forward_index(std::make_unique<WordNode>()),
-            node_pool(std::make_unique<utils::memory_pool<WordNode>>()) {
+            node_pool(std::make_unique<utils::memory_pool<WordNode>>()),
+            chunk_pool(std::make_unique<utils::memory_pool<collections::map_chunk<WordNode>>>()) {
         }
 
         Dictionary(const Dictionary &) = delete;
@@ -82,6 +86,7 @@ namespace crossword {
         ~Dictionary() {
             forward_index.reset();
             node_pool.reset();
+            chunk_pool.reset();
         }
 
         void find_words(std::vector<std::string> &vec,
@@ -93,8 +98,9 @@ namespace crossword {
         }
 
         void merge(Dictionary *other) {
-            forward_index->merge(other->forward_index.get());
+            forward_index->merge(other->forward_index.get(), chunk_pool.get());
             node_pool->merge_pools(other->node_pool.get());
+            chunk_pool->merge_pools(other->chunk_pool.get());
         }
 
         size_t calculate_size() {
@@ -158,10 +164,6 @@ namespace crossword {
                 //     << dict->count_nodes() << " nodes" << std::endl;
                 merge(dict.get());
             }
-
-            // std::cout << "======================" << std::endl
-            //          << " - " << calculate_size() << " words, "
-            //         << count_nodes() << " nodes" << std::endl;
         }
     };
 }

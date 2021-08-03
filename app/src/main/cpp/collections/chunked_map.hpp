@@ -5,6 +5,7 @@
 #include <functional>
 #include <iterator>
 #include <memory>
+#include "../utils/memory_pool.hpp"
 
 namespace crossword::collections {
 
@@ -105,7 +106,7 @@ namespace crossword::collections {
         void fill_element(element_type *element) {
             auto chunk_index = index / 3;
             auto index_inner = index - (chunk_index * 3);
-            auto chunk = &map->chunks[chunk_index];
+            map_chunk<V> *chunk = &map->chunks[chunk_index];
             switch (index_inner) {
                 case 0:
                     element->first = chunk->key1;
@@ -142,21 +143,21 @@ namespace crossword::collections {
 
     public:
 
-        std::unique_ptr<map_chunk<V>[]> chunks;
+        map_chunk<V>* chunks;
         int16_t size;
         int16_t capacity;
 
     private:
 
-        void resize_by_one() {
+        void resize_by_one(crossword::utils::memory_pool<map_chunk<V>>* pool) {
             auto old_chunk_count = capacity / 3;
-            auto new_chunks = std::make_unique<map_chunk<V>[]>(old_chunk_count + 1);
+            auto new_chunks = pool->alloc(old_chunk_count + 1);
             if (capacity > 0) {
                 for (auto i = 0; i < old_chunk_count; ++i) {
                     new_chunks[i] = chunks[i];
                 }
             }
-            chunks.swap(new_chunks);
+            chunks = new_chunks;
             capacity += 3;
         }
 
@@ -217,7 +218,8 @@ namespace crossword::collections {
 
         std::pair<std::pair<char, V*>, bool> try_emplace(
             char key,
-            V* value) {
+            V* value,
+            crossword::utils::memory_pool<map_chunk<V>>* pool) {
 
             auto it = find(key);
             if (it != end()) {
@@ -225,7 +227,7 @@ namespace crossword::collections {
             }
 
             if (size == capacity) {
-                resize_by_one();
+                resize_by_one(pool);
             }
 
             auto chunk_index = size / 3;

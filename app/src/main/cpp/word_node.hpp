@@ -61,7 +61,10 @@ namespace crossword {
         /// Pushes a word deep down the index.
         /// @param str Word being pushed into the index.
         /// @param index Current index depth.
-        bool push_word(std::string &&str, size_t index, utils::memory_pool<WordNode> *pool) {
+        bool push_word(std::string &&str,
+                       size_t index,
+                       utils::memory_pool<WordNode> *node_pool,
+                       utils::memory_pool<collections::map_chunk<WordNode>> *chunk_pool) {
 
             auto word_length = str.length();
             if (index < word_length) {
@@ -71,13 +74,13 @@ namespace crossword {
                     key = utils::to_lower(key);
                 }
 
-                auto [entry, inserted] = children.try_emplace(key, pool->alloc());
+                auto [entry, inserted] = children.try_emplace(key, node_pool->alloc(), chunk_pool);
                 if (!inserted) {
-                    pool->dealloc_last();
+                    node_pool->dealloc_last();
                 }
 
                 if (index < (word_length - 1)) {
-                    return entry.second->push_word(std::move(str), index + 1, pool);
+                    return entry.second->push_word(std::move(str), index + 1, node_pool, chunk_pool);
                 } else {
                     entry.second->valid_word = std::make_unique<std::string>(std::move(str));
                 }
@@ -154,7 +157,8 @@ namespace crossword {
             }
         }
 
-        void merge(WordNode *other) {
+        void merge(WordNode *other,
+                   utils::memory_pool<collections::map_chunk<WordNode>> *chunk_pool) {
 
             if (other->valid()) {
                 valid_word = std::move(other->valid_word);
@@ -164,21 +168,15 @@ namespace crossword {
                 if (!has_children()) {
                     children = std::move(other->children);
                 } else {
-                    std::vector<std::pair<char, WordNode*>> buffer;
                     for (auto other_child : other->children) {
                         auto result = children.find(other_child.first);
                         if (result == children.end()) {
-                            auto other_key = other_child.first;
-                            auto other_node = other_child.second;
-                            buffer.emplace_back(std::make_pair(other_key, other_node));
+                            children.try_emplace(other_child.first, other_child.second, chunk_pool);
                         } else {
                             auto this_node = result.get_element().second;
                             auto other_node = other_child.second;
-                            this_node->merge(other_node);
+                            this_node->merge(other_node, chunk_pool);
                         }
-                    }
-                    for (auto &pair : buffer) {
-                        children.try_emplace(pair.first, pair.second);
                     }
                 }
             }
