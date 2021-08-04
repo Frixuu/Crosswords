@@ -5,25 +5,26 @@ import android.text.Editable
 import android.text.TextWatcher
 import android.util.Log
 import android.view.View
+import android.view.ViewGroup
 import android.widget.EditText
 import android.widget.FrameLayout
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.DefaultItemAnimator
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import androidx.transition.Fade
+import androidx.transition.TransitionManager
 import com.google.android.material.snackbar.Snackbar
 import com.google.android.material.tabs.TabLayout
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
-import org.joda.time.Instant
 import xyz.lukasz.xword.util.time
-import java.text.Collator
 import java.util.*
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var loadingFrameLayout: FrameLayout
-    private lateinit var mainLayout: View
+    private lateinit var mainLayout: ViewGroup
 
     private var mostRecentThread : Thread? = null
     private val currentThreadLock = Any()
@@ -119,21 +120,29 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun switchIndexCategory(mode: String) {
+        val fadeDuration: Long = 150
         runOnUiThread {
+            // Fade the overlay in
+            TransitionManager.beginDelayedTransition(mainLayout, Fade().apply {
+                duration = fadeDuration
+                addTarget(loadingFrameLayout)
+            })
             loadingFrameLayout.visibility = View.VISIBLE
+
             GlobalScope.launch {
-                val duration = time {
-                    val dict = Dictionary.current ?: Dictionary("pl", "PL")
-                    dict.loadFromAsset(this@MainActivity)
-                    Dictionary.current = dict
-                }
+
+                // Manipulate the dictionary
+                val dict = Dictionary.current ?: Dictionary("pl", "PL")
+                dict.loadFromAsset(this@MainActivity)
+                Dictionary.current = dict
+
                 runOnUiThread {
-                    Snackbar.make(
-                        mainLayout,
-                        "Loading dictionary took ${duration.millis}ms",
-                        Snackbar.LENGTH_LONG
-                    ).show()
-                    loadingFrameLayout.visibility = View.INVISIBLE
+                    // Fade the overlay out
+                    TransitionManager.beginDelayedTransition(mainLayout, Fade().apply {
+                        duration = fadeDuration
+                        addTarget(loadingFrameLayout)
+                    })
+                    loadingFrameLayout.visibility = View.GONE
                 }
             }
         }
