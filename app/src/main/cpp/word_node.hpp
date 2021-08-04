@@ -6,7 +6,7 @@
 #include "collections/chunked_map.hpp"
 #include "utils/utf8.hpp"
 #include "utils/macros.hpp"
-#include "utils/memory_pool.hpp"
+#include "utils/arena.hpp"
 
 namespace crossword {
 
@@ -63,8 +63,8 @@ namespace crossword {
         /// @param index Current index depth.
         bool push_word(std::string* str,
                        size_t index,
-                       utils::memory_pool<WordNode> *node_pool,
-                       utils::memory_pool<collections::map_chunk<WordNode>> *chunk_pool) {
+                       utils::arena<WordNode> *node_pool,
+                       utils::arena<collections::map_chunk<WordNode>> *chunk_pool) {
 
             auto word_length = str->length();
             if (index < word_length) {
@@ -157,7 +157,7 @@ namespace crossword {
         }
 
         void merge(WordNode *other,
-                   utils::memory_pool<collections::map_chunk<WordNode>> *chunk_pool) {
+                   utils::arena<collections::map_chunk<WordNode>> *chunk_pool) {
 
             if (other->valid()) {
                 valid_word = other->valid_word;

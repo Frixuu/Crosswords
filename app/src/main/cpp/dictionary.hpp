@@ -10,7 +10,7 @@
 #include "word_node.hpp"
 #include "utils/utf8.hpp"
 #include "utils/macros.hpp"
-#include "utils/memory_pool.hpp"
+#include "utils/arena.hpp"
 
 namespace crossword {
 
@@ -24,9 +24,9 @@ namespace crossword {
     private:
 
         std::unique_ptr<WordNode> forward_index;
-        std::unique_ptr<memory_pool<WordNode>> node_pool;
-        std::unique_ptr<memory_pool<map_chunk<WordNode>>> chunk_pool;
-        std::unique_ptr<memory_pool<std::string>> string_pool;
+        std::unique_ptr<arena<WordNode>> node_pool;
+        std::unique_ptr<arena<map_chunk<WordNode>>> chunk_pool;
+        std::unique_ptr<arena<std::string>> string_pool;
 
         /// Parses lines from a UTF-8 encoded buffer and adds them to the dictionary.
         /// @param buffer Pointer to the data buffer.
@@ -91,9 +91,9 @@ namespace crossword {
         /// Creates a new, empty Dictionary.
         Dictionary() :
             forward_index(std::make_unique<WordNode>()),
-            node_pool(std::make_unique<memory_pool<WordNode>>()),
-            chunk_pool(std::make_unique<memory_pool<map_chunk<WordNode>>>()),
-            string_pool(std::make_unique<memory_pool<std::string>>()) {
+            node_pool(std::make_unique<arena<WordNode>>()),
+            chunk_pool(std::make_unique<arena<map_chunk<WordNode>>>()),
+            string_pool(std::make_unique<arena<std::string>>()) {
         }
 
         Dictionary(const Dictionary &) = delete;
@@ -118,9 +118,9 @@ namespace crossword {
 
         void merge(Dictionary *other) {
             forward_index->merge(other->forward_index.get(), chunk_pool.get());
-            node_pool->merge_pools(other->node_pool.get());
-            chunk_pool->merge_pools(other->chunk_pool.get());
-            string_pool->merge_pools(other->string_pool.get());
+            node_pool->merge(other->node_pool.get());
+            chunk_pool->merge(other->chunk_pool.get());
+            string_pool->merge(other->string_pool.get());
         }
 
         size_t calculate_size() {

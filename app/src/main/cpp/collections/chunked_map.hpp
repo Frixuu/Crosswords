@@ -5,7 +5,7 @@
 #include <functional>
 #include <iterator>
 #include <memory>
-#include "../utils/memory_pool.hpp"
+#include "../utils/arena.hpp"
 
 namespace crossword::collections {
 
@@ -137,7 +137,7 @@ namespace crossword::collections {
 
     template <typename V>
     class chunked_map {
-        
+
         using iterator = chunked_map_iterator<V>;
 
     public:
@@ -148,7 +148,7 @@ namespace crossword::collections {
 
     private:
 
-        void resize_by_one(crossword::utils::memory_pool<map_chunk<V>>* pool) {
+        void resize_by_one(crossword::utils::arena<map_chunk<V>>* pool) {
             auto old_chunk_count = capacity / 3;
             auto new_chunks = pool->alloc(old_chunk_count + 1);
             if (capacity > 0) {
@@ -165,27 +165,23 @@ namespace crossword::collections {
         chunked_map() : chunks(nullptr), size(0), capacity(0) {
         }
 
+        /// Checks if the map does not contain any elements.
         bool empty() const noexcept {
             return size == 0;
         }
 
+        /// Creates an iterator that points to the first pair of the map.
+        /// If the map is empty, equals to end().
         iterator begin() {
             return iterator(this, 0);
         }
 
+        /// Creates an iterator that points to an invalid element
+        /// after the last element of the map.
         iterator end() {
             return iterator(this, size);
         }
 
-        inline iterator find_naive(char key) {
-            auto it = begin();
-            for (; it != end(); ++it) {
-                if (it.get_element().first == key) {
-                    break;
-                }
-            }
-            return it;
-        }
 
         inline iterator find_chunk_linear(char key) {
             int16_t chunk_index = 0;
@@ -218,7 +214,7 @@ namespace crossword::collections {
         std::pair<std::pair<char, V*>, bool> try_emplace(
             char key,
             V* value,
-            crossword::utils::memory_pool<map_chunk<V>>* pool) {
+            crossword::utils::arena<map_chunk<V>>* pool) {
 
             auto it = find(key);
             if (it != end()) {
