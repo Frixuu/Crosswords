@@ -107,11 +107,12 @@
 
     </androidx.core.widget.NestedScrollView>
 
-    <!--
     <FrameLayout
+        android:id="@+id/loading_frame_layout"
+        android:elevation="8dp"
         android:clickable="true"
         android:focusable="true"
-        android:alpha="0.4"
+        android:alpha="0.5"
         android:animateLayoutChanges="true"
         android:background="@android:color/black"
         android:visibility="visible"
@@ -123,9 +124,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
-            android:indeterminate="true"
-            app:indicatorSize="64dp" />
+            android:indeterminate="true" />
     </FrameLayout>
-    -->
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

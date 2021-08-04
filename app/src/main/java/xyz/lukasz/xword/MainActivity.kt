@@ -6,6 +6,7 @@ import android.text.TextWatcher
 import android.util.Log
 import android.view.View
 import android.widget.EditText
+import android.widget.FrameLayout
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.DefaultItemAnimator
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -15,10 +16,14 @@ import com.google.android.material.tabs.TabLayout
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import org.joda.time.Instant
+import xyz.lukasz.xword.util.time
 import java.text.Collator
 import java.util.*
 
 class MainActivity : AppCompatActivity() {
+
+    private lateinit var loadingFrameLayout: FrameLayout
+    private lateinit var mainLayout: View
 
     private var mostRecentThread : Thread? = null
     private val currentThreadLock = Any()
@@ -27,7 +32,8 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        val view = findViewById<View>(R.id.main_layout)
+        loadingFrameLayout = findViewById(R.id.loading_frame_layout)
+        mainLayout = findViewById(R.id.main_layout)
 
         val recyclerView = findViewById<RecyclerView>(R.id.recycler_view).apply {
             setHasFixedSize(true)
@@ -72,8 +78,9 @@ class MainActivity : AppCompatActivity() {
                             runOnUiThread {
                                 recyclerView.adapter = WordAdapter(resultList, recyclerView)
                                 if (results.size >= limit) {
-                                    val message = view.resources.getText(R.string.search_showing_only).toString()
-                                    Snackbar.make(view,
+                                    val resources = mainLayout.resources
+                                    val message = resources.getText(R.string.search_showing_only).toString()
+                                    Snackbar.make(mainLayout,
                                         String.format(message, results.size),
                                         Snackbar.LENGTH_LONG)
                                         .show()
@@ -96,14 +103,7 @@ class MainActivity : AppCompatActivity() {
 
             override fun onTabSelected(tab: TabLayout.Tab?) {
                 Log.i("MainActivity", "tab selected: ${tab?.text}")
-                GlobalScope.launch {
-                    val before = Instant.now()
-                    val dict = Dictionary.current ?: Dictionary("pl", "PL")
-                    dict.loadFromAsset(this@MainActivity)
-                    Dictionary.current = dict
-                    val after = Instant.now()
-                    Snackbar.make(view, "Loading dictionary took ${after.millis - before.millis}ms", Snackbar.LENGTH_LONG).show()
-                }
+                switchIndexCategory("unused")
             }
 
             override fun onTabReselected(tab: TabLayout.Tab?) {
@@ -114,11 +114,28 @@ class MainActivity : AppCompatActivity() {
                 Log.i("MainActivity", "tab unselected: ${tab?.text}")
             }
         })
+
+        switchIndexCategory("unused")
     }
 
-    companion object {
-        init {
-            System.loadLibrary("native-lib")
+    private fun switchIndexCategory(mode: String) {
+        runOnUiThread {
+            loadingFrameLayout.visibility = View.VISIBLE
+            GlobalScope.launch {
+                val duration = time {
+                    val dict = Dictionary.current ?: Dictionary("pl", "PL")
+                    dict.loadFromAsset(this@MainActivity)
+                    Dictionary.current = dict
+                }
+                runOnUiThread {
+                    Snackbar.make(
+                        mainLayout,
+                        "Loading dictionary took ${duration.millis}ms",
+                        Snackbar.LENGTH_LONG
+                    ).show()
+                    loadingFrameLayout.visibility = View.INVISIBLE
+                }
+            }
         }
     }
 }

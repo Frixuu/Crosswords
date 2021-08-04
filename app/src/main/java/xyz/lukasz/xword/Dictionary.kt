@@ -101,5 +101,8 @@ class Dictionary(private val lang: String, private val country: String) {
 
     companion object {
         var current: Dictionary? = null
+        init {
+            System.loadLibrary("native-lib")
+        }
     }
 }
