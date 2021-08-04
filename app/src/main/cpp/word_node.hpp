@@ -128,14 +128,13 @@ namespace crossword {
                 return;
             }
 
-            if (has_children() && index <= pattern.length()) {
+            if (has_children() && index < pattern.length()) {
                 auto ch = pattern.at(index);
                 if (ch == '.') {
                     for (const auto &entry : children) {
                         auto key = entry.first;
-
                         auto offset = 0;
-                        if (!utils::codepoint_is_continuation(key)) {
+                        if (LIKELY(!utils::codepoint_is_continuation(key))) {
                             offset = utils::codepoint_size(key) - 1;
                         }
 

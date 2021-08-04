@@ -12,7 +12,7 @@ namespace crossword::collections {
     template <typename V>
     struct map_chunk {
 
-        typedef V* pointer_type;
+        using pointer_type = V*;
 
         char key1, key2, key3;
         pointer_type value1, value2, value3;
@@ -40,8 +40,7 @@ namespace crossword::collections {
 
         using iterator_category = std::random_access_iterator_tag;
         using difference_type = int16_t;
-
-        typedef std::pair<char, V*> element_type;
+        using element_type = std::pair<char, V*>;
 
         chunked_map_iterator(chunked_map<V> *map, int16_t index) : map(map), index(index) { }
         chunked_map_iterator(const chunked_map_iterator &other) = default;
@@ -139,7 +138,7 @@ namespace crossword::collections {
     template <typename V>
     class chunked_map {
         
-        typedef chunked_map_iterator<V> iterator;
+        using iterator = chunked_map_iterator<V>;
 
     public:
 

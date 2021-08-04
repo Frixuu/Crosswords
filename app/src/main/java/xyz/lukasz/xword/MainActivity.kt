@@ -20,8 +20,6 @@ import java.util.*
 
 class MainActivity : AppCompatActivity() {
 
-    external fun fooFromNative(): Int
-
     private var mostRecentThread : Thread? = null
     private val currentThreadLock = Any()
 
@@ -30,7 +28,6 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
 
         val view = findViewById<View>(R.id.main_layout)
-        Snackbar.make(view, "Native says: ${fooFromNative()}!", Snackbar.LENGTH_LONG).show()
 
         val recyclerView = findViewById<RecyclerView>(R.id.recycler_view).apply {
             setHasFixedSize(true)
@@ -54,7 +51,7 @@ class MainActivity : AppCompatActivity() {
                     Log.w("MainActivity", "Current dictionary is null!")
                     return
                 }
-                if (!currentDict.isLoaded()) {
+                if (!currentDict.loaded) {
                     Log.w("MainActivity", "Current dictionary exists, but is not loaded yet!")
                     return
                 }
@@ -71,7 +68,7 @@ class MainActivity : AppCompatActivity() {
                         if (currentThread == mostRecentThread) {
                             val cursor = results.lastOrNull()
                             val resultList = mutableListOf(*results)
-                            Collections.sort(resultList, Collator.getInstance())
+                            Collections.sort(resultList, currentDict.collator)
                             runOnUiThread {
                                 recyclerView.adapter = WordAdapter(resultList, recyclerView)
                                 if (results.size >= limit) {
@@ -98,12 +95,11 @@ class MainActivity : AppCompatActivity() {
         tabLayout.addOnTabSelectedListener(object : TabLayout.OnTabSelectedListener {
 
             override fun onTabSelected(tab: TabLayout.Tab?) {
-                // Handle tab select
-                Log.i("MA", "tab selected: ${tab?.text}")
+                Log.i("MainActivity", "tab selected: ${tab?.text}")
                 GlobalScope.launch {
                     val before = Instant.now()
-                    val dict = Dictionary.current ?: Dictionary()
-                    dict.loadFromAsset(this@MainActivity, "dictionaries/pl_PL/words.txt")
+                    val dict = Dictionary.current ?: Dictionary("pl", "PL")
+                    dict.loadFromAsset(this@MainActivity)
                     Dictionary.current = dict
                     val after = Instant.now()
                     Snackbar.make(view, "Loading dictionary took ${after.millis - before.millis}ms", Snackbar.LENGTH_LONG).show()
@@ -111,11 +107,11 @@ class MainActivity : AppCompatActivity() {
             }
 
             override fun onTabReselected(tab: TabLayout.Tab?) {
-                Log.i("MA", "tab reselected: ${tab?.text}")
+                Log.i("MainActivity", "tab reselected: ${tab?.text}")
             }
 
             override fun onTabUnselected(tab: TabLayout.Tab?) {
-                Log.i("MA", "tab unselected: ${tab?.text}")
+                Log.i("MainActivity", "tab unselected: ${tab?.text}")
             }
         })
     }
