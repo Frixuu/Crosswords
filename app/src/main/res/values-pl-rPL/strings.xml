@@ -7,4 +7,6 @@
     <string name="tab_missing_letters">Brak. litery</string>
     <string name="tab_rhymes">Rymy</string>
     <string name="tab_anagrams">Anagramy</string>
+    <string name="operation_cancelled">Operacja w toku została przerwana.</string>
+    <string name="operation_failed">Operacja w toku zakończyłą się niepowodzeniem.</string>
 </resources>

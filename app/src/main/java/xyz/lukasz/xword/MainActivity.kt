@@ -16,6 +16,7 @@ import androidx.transition.Fade
 import androidx.transition.TransitionManager
 import com.google.android.material.snackbar.Snackbar
 import com.google.android.material.tabs.TabLayout
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import xyz.lukasz.xword.util.time
@@ -130,12 +131,10 @@ class MainActivity : AppCompatActivity() {
             loadingFrameLayout.visibility = View.VISIBLE
 
             GlobalScope.launch {
-
-                // Manipulate the dictionary
                 val dict = Dictionary.current ?: Dictionary("pl", "PL")
                 dict.loadFromAsset(this@MainActivity)
                 Dictionary.current = dict
-
+            }.invokeOnCompletion { cause ->
                 runOnUiThread {
                     // Fade the overlay out
                     TransitionManager.beginDelayedTransition(mainLayout, Fade().apply {
@@ -143,6 +142,20 @@ class MainActivity : AppCompatActivity() {
                         addTarget(loadingFrameLayout)
                     })
                     loadingFrameLayout.visibility = View.GONE
+
+                    // If the job has been aborted, notify the user
+                    if (cause != null) {
+                        val resources = mainLayout.resources
+                        Snackbar.make(
+                            mainLayout,
+                            resources.getString(if (cause is CancellationException) {
+                                R.string.operation_cancelled
+                            } else {
+                                R.string.operation_failed
+                            }),
+                            Snackbar.LENGTH_LONG)
+                            .show()
+                    }
                 }
             }
         }
