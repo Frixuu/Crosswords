@@ -19,7 +19,6 @@ import com.google.android.material.tabs.TabLayout
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
-import xyz.lukasz.xword.util.time
 import java.util.*
 
 class MainActivity : AppCompatActivity() {
@@ -78,7 +77,7 @@ class MainActivity : AppCompatActivity() {
                             val resultList = mutableListOf(*results)
                             Collections.sort(resultList, currentDict.collator)
                             runOnUiThread {
-                                recyclerView.adapter = WordAdapter(resultList, recyclerView)
+                                recyclerView.adapter = SingleWordAdapter(resultList)
                                 if (results.size >= limit) {
                                     val resources = mainLayout.resources
                                     val message = resources.getText(R.string.search_showing_only).toString()
@@ -118,6 +117,10 @@ class MainActivity : AppCompatActivity() {
         })
 
         switchIndexCategory("unused")
+    }
+
+    fun showWordDefinition(view: View) {
+
     }
 
     private fun switchIndexCategory(mode: String) {

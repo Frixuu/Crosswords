@@ -11,6 +11,10 @@ android {
         noCompress "txt"
     }
 
+    buildFeatures {
+        dataBinding true
+    }
+
     defaultConfig {
         applicationId "xyz.lukasz.xword"
         minSdkVersion 21

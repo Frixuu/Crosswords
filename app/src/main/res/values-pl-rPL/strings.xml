@@ -9,4 +9,5 @@
     <string name="tab_anagrams">Anagramy</string>
     <string name="operation_cancelled">Operacja w toku została przerwana.</string>
     <string name="operation_failed">Operacja w toku zakończyłą się niepowodzeniem.</string>
+    <string name="misc_three_dots">...</string>
 </resources>
