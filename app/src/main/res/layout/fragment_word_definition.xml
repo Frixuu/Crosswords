@@ -24,10 +24,10 @@
                 android:padding="5dp">
 
                 <TextView
-                    android:id="@+id/word_in_list"
+                    android:id="@+id/defined_word"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
-                    android:text='XDDDDDDDDDDDD'
+                    android:text='@{word, default="..."}'
                     android:textColor="#333"
                     android:gravity="center"
                     android:textSize="40sp" />

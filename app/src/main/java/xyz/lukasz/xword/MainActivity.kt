@@ -122,9 +122,18 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun showWordDefinition(word: String) {
+        val container = R.id.fragment_container_view
+        val fragment = DefinitionFragment(word)
         supportFragmentManager.commit {
+            setCustomAnimations(
+                R.anim.slide_in,
+                R.anim.fade_out,
+                R.anim.fade_in,
+                R.anim.slide_out
+            )
             setReorderingAllowed(true)
-            add<DefinitionFragment>(R.id.fragment_container_view)
+            add(container, fragment)
+            addToBackStack(null)
         }
     }
 
