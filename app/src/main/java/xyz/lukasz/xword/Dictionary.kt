@@ -13,13 +13,13 @@ class Dictionary(private val lang: String, private val country: String) {
     /**
      * Represents information about this dictionary's language.
      */
-    private val locale = Locale(lang, country)
+    private val locale: Locale = Locale(lang, country)
 
     /**
      * Collator for this dictionary's locale.
      * Used for string comparisons.
      */
-    val collator = Collator.getInstance(locale)
+    val collator: Collator = Collator.getInstance(locale)
 
     /**
      * A pointer to a native Dictionary object.

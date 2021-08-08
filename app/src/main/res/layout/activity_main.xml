@@ -96,7 +96,7 @@
 
         <FrameLayout
             android:id="@+id/loading_frame_layout"
-            android:elevation="8dp"
+            android:elevation="10dp"
             android:clickable="true"
             android:focusable="true"
             android:alpha="0.5"
@@ -113,6 +113,12 @@
                 android:layout_gravity="center"
                 android:indeterminate="true" />
         </FrameLayout>
+
+        <androidx.fragment.app.FragmentContainerView
+            android:elevation="8dp"
+            android:id="@+id/fragment_container_view"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
 
     </androidx.coordinatorlayout.widget.CoordinatorLayout>
 </layout>

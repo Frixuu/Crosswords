@@ -9,6 +9,8 @@ import android.view.ViewGroup
 import android.widget.EditText
 import android.widget.FrameLayout
 import androidx.appcompat.app.AppCompatActivity
+import androidx.fragment.app.add
+import androidx.fragment.app.commit
 import androidx.recyclerview.widget.DefaultItemAnimator
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -77,7 +79,7 @@ class MainActivity : AppCompatActivity() {
                             val resultList = mutableListOf(*results)
                             Collections.sort(resultList, currentDict.collator)
                             runOnUiThread {
-                                recyclerView.adapter = SingleWordAdapter(resultList)
+                                recyclerView.adapter = SingleWordAdapter(resultList, this@MainActivity)
                                 if (results.size >= limit) {
                                     val resources = mainLayout.resources
                                     val message = resources.getText(R.string.search_showing_only).toString()
@@ -119,8 +121,11 @@ class MainActivity : AppCompatActivity() {
         switchIndexCategory("unused")
     }
 
-    fun showWordDefinition(view: View) {
-
+    fun showWordDefinition(word: String) {
+        supportFragmentManager.commit {
+            setReorderingAllowed(true)
+            add<DefinitionFragment>(R.id.fragment_container_view)
+        }
     }
 
     private fun switchIndexCategory(mode: String) {
