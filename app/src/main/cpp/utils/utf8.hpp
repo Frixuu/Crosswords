@@ -2,7 +2,6 @@
 #define CROSSWORD_HELPER_UTF8_HPP
 
 #include <string>
-#include "macros.hpp"
 
 namespace crossword::utils {
 

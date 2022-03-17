@@ -5,7 +5,6 @@
 #include <iterator>
 #include <memory>
 #include <vector>
-#include "macros.hpp"
 
 namespace crossword::utils {
 
@@ -106,11 +105,7 @@ namespace crossword::utils {
         T* alloc() {
             auto segment = &segments[current_segment];
 
-            // Warning: We know that the segments are merged
-            // when no more objects get allocated in the arena,
-            // but if that is no longer the case,
-            // replace the `if` with `while`
-            if (UNLIKELY(segment->full())) {
+            while (segment->full()) [[unlikely]] {
                 push_new_segment();
                 ++current_segment;
                 segment = &segments[current_segment];
@@ -124,8 +119,7 @@ namespace crossword::utils {
         T* alloc(size_t n) {
             auto segment = &segments[current_segment];
 
-            // Ditto
-            if (UNLIKELY(!segment->can_allocate(n))) {
+            while (!segment->can_allocate(n)) [[unlikely]] {
                 push_new_segment(n);
                 ++current_segment;
                 segment = &segments[current_segment];

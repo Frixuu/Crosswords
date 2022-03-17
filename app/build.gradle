@@ -28,7 +28,7 @@ android {
 
         externalNativeBuild {
             cmake {
-                cppFlags "-std=c++17 -Wall -Wextra"
+                cppFlags "-std=c++20 -Wall -Wextra -pedantic"
             }
         }
 
@@ -50,6 +50,7 @@ android {
         targetCompatibility JavaVersion.VERSION_1_8
     }
 
+    ndkVersion '24.0.8215888'
     externalNativeBuild {
         cmake {
             path "CMakeLists.txt"

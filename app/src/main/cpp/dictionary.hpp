@@ -9,7 +9,6 @@
 #include <vector>
 #include "word_node.hpp"
 #include "utils/utf8.hpp"
-#include "utils/macros.hpp"
 #include "utils/arena.hpp"
 
 namespace crossword {
@@ -53,7 +52,7 @@ namespace crossword {
 
                     // CRLF sequences and multiple line breaks are valid,
                     // but since we control the input, we know that's pretty rare
-                    if (LIKELY(!line_buffer.empty())) {
+                    if (!line_buffer.empty()) [[likely]] {
 
                         // Most of the words are short enough to be inlined
                         auto word_ptr = string_pool->alloc();
@@ -62,7 +61,7 @@ namespace crossword {
                         line_buffer.clear();
 
                         // The input is pre-sorted, so we usually get the cached parent
-                        if (LIKELY(to_lower(line_buffer[0]) == last_first_byte)) {
+                        if (to_lower(line_buffer[0]) == last_first_byte) [[likely]] {
                             last_ancestor->push_word(word_ptr, 1, node_pool.get(), chunk_pool.get());
                         } else {
                             // The first letter has changed,

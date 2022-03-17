@@ -5,7 +5,6 @@
 #include <string>
 #include "collections/chunked_map.hpp"
 #include "utils/utf8.hpp"
-#include "utils/macros.hpp"
 #include "utils/arena.hpp"
 
 namespace crossword {
@@ -84,7 +83,7 @@ namespace crossword {
                 } else {
                     entry.second->valid_word = str;
                 }
-            } else if (LIKELY(index == word_length)) {
+            } else if (index == word_length) [[likely]] {
                 valid_word = str;
             } else {
                 return false;
@@ -134,7 +133,7 @@ namespace crossword {
                     for (const auto &entry : children) {
                         auto key = entry.first;
                         auto offset = 0;
-                        if (LIKELY(!utils::codepoint_is_continuation(key))) {
+                        if (!utils::codepoint_is_continuation(key)) {
                             offset = utils::codepoint_size(key) - 1;
                         }
 

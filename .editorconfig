@@ -1,0 +1,16 @@
+root = true
+
+[*]
+insert_final_newline = true
+charset = utf-8
+
+[*.{cpp,hpp}]
+indent_style = space
+indent_size = 4
+
+[*.kt]
+indent_style = space
+indent_size = 4
+
+[*.txt]
+end_of_line = lf
