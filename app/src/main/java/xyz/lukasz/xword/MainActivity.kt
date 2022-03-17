@@ -16,6 +16,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.transition.Fade
 import androidx.transition.TransitionManager
+import com.android.volley.toolbox.Volley
 import com.google.android.material.snackbar.Snackbar
 import com.google.android.material.tabs.TabLayout
 import kotlinx.coroutines.CancellationException
@@ -119,6 +120,10 @@ class MainActivity : AppCompatActivity() {
         })
 
         switchIndexCategory("unused")
+    }
+
+    override fun onStop() {
+        super.onStop()
     }
 
     fun showWordDefinition(word: String) {
