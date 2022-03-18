@@ -9,12 +9,13 @@
 #include <vector>
 #include "word_node.hpp"
 #include "utils/utf8.hpp"
-#include "utils/arena.hpp"
+#include "memory/arena.hpp"
 
 namespace crossword {
 
     using namespace ::crossword::collections;
     using namespace ::crossword::utils;
+    using ::crossword::memory::Arena;
 
     /// Stores a set of words from a particular language in forms
     /// that allow for easy indexing.
@@ -23,9 +24,9 @@ namespace crossword {
     private:
 
         std::unique_ptr<WordNode> forward_index;
-        std::unique_ptr<arena<WordNode>> node_pool;
-        std::unique_ptr<arena<map_chunk<WordNode>>> chunk_pool;
-        std::unique_ptr<arena<std::string>> string_pool;
+        std::unique_ptr<Arena<WordNode>> node_arena;
+        std::unique_ptr<Arena<MapChunk<uint8_t, WordNode*>>> index_map_chunk_arena;
+        std::unique_ptr<Arena<std::string>> string_arena;
 
         /// Parses lines from a UTF-8 encoded buffer and adds them to the dictionary.
         /// @param buffer Pointer to the data buffer.
@@ -39,15 +40,15 @@ namespace crossword {
             // Cache not to lookup first parent
             char last_first_byte = 'a';
             auto last_ancestor = forward_index->children
-                .try_emplace('a', node_pool->alloc(), chunk_pool.get())
-                .first.second;
+                .try_emplace('a', node_arena->alloc(), index_map_chunk_arena.get())
+                .entry.second;
 
             auto index = start;
             while (index < end) {
                 // Read the buffer forward
                 auto byte = buffer[index++];
                 if (byte != '\n' && byte != '\r') {
-                    line_buffer.emplace_back(byte);
+                    line_buffer.push_back(byte);
                 } else {
 
                     // CRLF sequences and multiple line breaks are valid,
@@ -55,22 +56,22 @@ namespace crossword {
                     if (!line_buffer.empty()) [[likely]] {
 
                         // Most of the words are short enough to be inlined
-                        auto word_ptr = string_pool->alloc();
+                        auto word_ptr = string_arena->alloc();
                         *word_ptr = std::string(line_buffer.begin(), line_buffer.end());
                         auto first_letter = to_lower(line_buffer[0]);
                         line_buffer.clear();
 
                         // The input is pre-sorted, so we usually get the cached parent
                         if (to_lower(line_buffer[0]) == last_first_byte) [[likely]] {
-                            last_ancestor->push_word(word_ptr, 1, node_pool.get(), chunk_pool.get());
+                            last_ancestor->push_word(word_ptr, 1, node_arena.get(), index_map_chunk_arena.get());
                         } else {
                             // The first letter has changed,
                             // next words will use the new parent
                             last_first_byte = first_letter;
                             last_ancestor = forward_index->children
-                                .try_emplace(first_letter, node_pool->alloc(), chunk_pool.get())
-                                .first.second;
-                            last_ancestor->push_word(word_ptr, 1, node_pool.get(), chunk_pool.get());
+                                .try_emplace(first_letter, node_arena->alloc(), index_map_chunk_arena.get())
+                                .entry.second;
+                            last_ancestor->push_word(word_ptr, 1, node_arena.get(), index_map_chunk_arena.get());
                         }
                     }
                 }
@@ -79,9 +80,9 @@ namespace crossword {
             // In case the buffer did not end with a new line,
             // push the remaining chars
             if (!line_buffer.empty()) {
-                auto word_ptr = string_pool->alloc();
+                auto word_ptr = string_arena->alloc();
                 *word_ptr = std::string(line_buffer.begin(), line_buffer.end());
-                forward_index->push_word(word_ptr, 0, node_pool.get(), chunk_pool.get());
+                forward_index->push_word(word_ptr, 0, node_arena.get(), index_map_chunk_arena.get());
             }
         }
 
@@ -90,9 +91,9 @@ namespace crossword {
         /// Creates a new, empty Dictionary.
         Dictionary() :
             forward_index(std::make_unique<WordNode>()),
-            node_pool(std::make_unique<arena<WordNode>>()),
-            chunk_pool(std::make_unique<arena<map_chunk<WordNode>>>()),
-            string_pool(std::make_unique<arena<std::string>>()) {
+            node_arena(std::make_unique<Arena<WordNode>>()),
+            index_map_chunk_arena(std::make_unique<Arena<MapChunk<uint8_t, WordNode*>>>()),
+            string_arena(std::make_unique<Arena<std::string>>()) {
         }
 
         Dictionary(const Dictionary &) = delete;
@@ -102,9 +103,9 @@ namespace crossword {
 
         ~Dictionary() {
             forward_index.reset();
-            node_pool.reset();
-            chunk_pool.reset();
-            string_pool.reset();
+            node_arena.reset();
+            index_map_chunk_arena.reset();
+            string_arena.reset();
         }
 
         void find_words(std::vector<std::string> &vec,
@@ -116,10 +117,10 @@ namespace crossword {
         }
 
         void merge(Dictionary *other) {
-            forward_index->merge(other->forward_index.get(), chunk_pool.get());
-            node_pool->merge(other->node_pool.get());
-            chunk_pool->merge(other->chunk_pool.get());
-            string_pool->merge(other->string_pool.get());
+            forward_index->merge(other->forward_index.get(), index_map_chunk_arena.get());
+            node_arena->merge(other->node_arena.get());
+            index_map_chunk_arena->merge(other->index_map_chunk_arena.get());
+            string_arena->merge(other->string_arena.get());
         }
 
         size_t calculate_size() {

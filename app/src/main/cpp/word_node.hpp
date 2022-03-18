@@ -5,15 +5,19 @@
 #include <string>
 #include "collections/chunked_map.hpp"
 #include "utils/utf8.hpp"
-#include "utils/arena.hpp"
+#include "memory/arena.hpp"
 
 namespace crossword {
+
+    using ::crossword::memory::Arena;
+    using ::crossword::collections::ChunkedMap;
+    using ::crossword::collections::MapChunk;
 
     /// A node in an index representing set of strings.
     struct WordNode {
 
         std::string* valid_word;
-        collections::chunked_map<WordNode> children;
+        ChunkedMap<uint8_t, WordNode*> children;
 
         /// Creates a new WordNode representing an invalid word.
         WordNode() : valid_word(nullptr) {
@@ -62,8 +66,8 @@ namespace crossword {
         /// @param index Current index depth.
         bool push_word(std::string* str,
                        size_t index,
-                       utils::arena<WordNode> *node_pool,
-                       utils::arena<collections::map_chunk<WordNode>> *chunk_pool) {
+                       Arena<WordNode> *node_pool,
+                       Arena<MapChunk<uint8_t, WordNode*>> *chunk_pool) {
 
             auto word_length = str->length();
             if (index < word_length) {
@@ -156,7 +160,7 @@ namespace crossword {
         }
 
         void merge(WordNode *other,
-                   utils::arena<collections::map_chunk<WordNode>> *chunk_pool) {
+                   Arena<MapChunk<uint8_t, WordNode*>> *chunk_pool) {
 
             if (other->valid()) {
                 valid_word = other->valid_word;

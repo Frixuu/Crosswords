@@ -6,10 +6,10 @@
 #include <memory>
 #include <vector>
 
-namespace crossword::utils {
+namespace crossword::memory {
 
     template<typename T>
-    class arena_segment {
+    class ArenaSegment {
 
     private:
 
@@ -20,12 +20,27 @@ namespace crossword::utils {
     public:
 
         /// Creates a new segment that can hold n objects of type T.
-        explicit arena_segment(size_t size) : size(size), used(0) {
+        explicit ArenaSegment(size_t size) : size(size), used(0) {
             data = std::make_unique<T[]>(size);
         }
 
-        arena_segment(arena_segment&& other) noexcept : size(other.size), used(other.used) {
+        ArenaSegment(ArenaSegment&& other) noexcept : size(other.size), used(other.used) {
             data.swap(other.data);
+        }
+
+        ArenaSegment& operator=(ArenaSegment&& other) noexcept {
+            std::swap(size, other.size);
+            std::swap(used, other.used);
+            data.swap(other.data);
+            return *this;
+        }
+
+        ArenaSegment(const ArenaSegment&) = delete;
+        ArenaSegment& operator=(const ArenaSegment&) = delete;
+
+        /// Returns true if no objects have been allocated in this segment yet.
+        inline bool empty() const noexcept {
+            return used == 0;
         }
 
         /// Returns true if all the allocated slots are taken.
@@ -40,59 +55,64 @@ namespace crossword::utils {
 
         /// Allocates a single object.
         /// This method does NOT check whether the segment is full.
-        T* alloc() {
-            auto x = data.get() + used;
-            ++used;
-            return x;
+        inline T* alloc() {
+            return alloc(1);
         }
 
         /// Allocates an array of n objects.
         /// This method does NOT check whether the segment is full.
-        T* alloc(size_t n) {
+        inline T* alloc(size_t n) {
             auto x = data.get() + used;
             used += n;
             return x;
         }
 
         void dealloc_last() {
-            --used;
+            if (!empty()) [[likely]] {
+                --used;
+            }
         }
     };
 
+    static_assert(
+            sizeof(ArenaSegment<int>) == 3 * sizeof(void*),
+            "ArenaSegment has to be 3 pointers in size");
+
     template<typename T>
-    class arena {
+    class Arena {
 
     private:
 
-        const size_t typical_size = 8192;
+        const size_t min_size = 512;
+        const size_t typical_size = 16384;
 
-        std::vector<arena_segment<T>> segments;
+        std::vector<ArenaSegment<T>> segments;
         size_t current_segment;
 
         /// Creates a new segment with default size.
         inline void push_new_segment() {
-            push_new_segment(0);
+            push_new_segment(typical_size);
         }
 
         /// Creates a new segment that can hold at least n items.
-        void push_new_segment(size_t min_size) {
-            segments.emplace_back(std::move(arena_segment<T>(std::max(min_size, typical_size))));
+        inline void push_new_segment(size_t segment_size) {
+            segments.push_back(ArenaSegment<T>(std::max(segment_size, min_size)));
         }
 
-        /// Moves an existing segment and attaches it to this arena.
-        void push_existing_segment(arena_segment<T>&& segment) {
-            segments.emplace_back(std::move(segment));
+        /// Moves an existing segment and attaches it to this Arena.
+        inline void push_existing_segment(ArenaSegment<T>&& segment) {
+            segments.push_back(std::move(segment));
         }
 
     public:
 
-        /// Creates a new arena allocator.
-        arena() : current_segment(0) {
+        /// Creates a new Arena allocator.
+        Arena() : current_segment(0) {
             push_new_segment();
         }
 
-        /// Moves all segments belonging to some other arena to this arena.
-        void merge(arena<T> *other) {
+        /// Moves all segments belonging to some other Arena to this Arena.
+        void merge(Arena<T>* other) {
             auto it = std::make_move_iterator(other->segments.begin());
             auto end = std::make_move_iterator(other->segments.end());
             while (it != end) {
@@ -102,16 +122,8 @@ namespace crossword::utils {
         }
 
         /// Allocates a single object.
-        T* alloc() {
-            auto segment = &segments[current_segment];
-
-            while (segment->full()) [[unlikely]] {
-                push_new_segment();
-                ++current_segment;
-                segment = &segments[current_segment];
-            }
-
-            return segment->alloc();
+        inline T* alloc() {
+            return alloc(1);
         }
 
         /// Allocates an array of n objects.

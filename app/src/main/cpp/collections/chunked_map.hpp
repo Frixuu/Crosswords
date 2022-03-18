@@ -5,88 +5,83 @@
 #include <functional>
 #include <iterator>
 #include <memory>
-#include "../utils/arena.hpp"
+#include "../memory/arena.hpp"
 
 namespace crossword::collections {
 
-    template <typename V>
-    struct map_chunk {
+    using ::crossword::memory::Arena;
 
-        using pointer_type = V*;
-
-        char key1, key2, key3;
-        pointer_type value1, value2, value3;
-
-        map_chunk() {
-            key1 = key2 = key3 = 0;
-            value1 = nullptr;
-            value2 = nullptr;
-            value3 = nullptr;
-        };
+    template <typename K, typename V>
+    struct MapChunk {
+        K key1, key2, key3;
+        V value1, value2, value3;
     };
 
-    template <typename V>
-    class chunked_map;
+    static_assert(
+            sizeof(MapChunk<uint8_t, void*>) == 4 * sizeof(void*),
+            "MapChunk of char keys must be 4 pointers in size");
 
-    template <typename V>
-    class chunked_map_iterator {
+    template <typename K, typename V>
+    class ChunkedMap;
+
+    template <typename K, typename V>
+    class ChunkedMapIterator {
 
     protected:
 
-        chunked_map<V> *map;
+        ChunkedMap<K, V>* map;
         int16_t index;
 
     public:
 
         using iterator_category = std::random_access_iterator_tag;
         using difference_type = int16_t;
-        using element_type = std::pair<char, V*>;
 
-        chunked_map_iterator(chunked_map<V> *map, int16_t index) : map(map), index(index) { }
-        chunked_map_iterator(const chunked_map_iterator &other) = default;
-        ~chunked_map_iterator() {}
+        ChunkedMapIterator(ChunkedMap<K, V>* map, int16_t index) : map(map), index(index) { }
+        ChunkedMapIterator(const ChunkedMapIterator &other) = default;
+        ~ChunkedMapIterator() {}
 
         operator bool() const {
             return index >= 0 && index < map->size;
         }
 
-        bool operator ==(const chunked_map_iterator &other) const {
+        bool operator ==(const ChunkedMapIterator &other) const {
             return map == other.map && index == other.index;
         }
 
-        chunked_map_iterator& operator +=(const difference_type &delta) {
+        ChunkedMapIterator& operator +=(const difference_type &delta) {
             index += delta;
             return *this;
         }
 
-        chunked_map_iterator& operator -=(const difference_type &delta) {
+        ChunkedMapIterator& operator -=(const difference_type &delta) {
             index -= delta;
             return *this;
         }
 
-        chunked_map_iterator& operator ++() {
+        ChunkedMapIterator& operator ++() {
             ++index;
             return *this;
         }
 
-        chunked_map_iterator& operator --() {
+        ChunkedMapIterator& operator --() {
             --index;
             return *this;
         }
 
-        chunked_map_iterator operator ++(int) {
+        ChunkedMapIterator operator ++(int) {
             auto temp(*this);
             ++index;
             return temp;
         }
 
-        chunked_map_iterator operator --(int) {
+        ChunkedMapIterator operator --(int) {
             auto temp(*this);
             --index;
             return temp;
         }
 
-        chunked_map_iterator operator +(const difference_type &delta) {
+        ChunkedMapIterator operator +(const difference_type &delta) {
             auto old_index = index;
             index += delta;
             auto temp(*this);
@@ -94,7 +89,7 @@ namespace crossword::collections {
             return temp;
         }
 
-        chunked_map_iterator operator -(const difference_type &delta) {
+        ChunkedMapIterator operator -(const difference_type &delta) {
             auto old_index = index;
             index -= delta;
             auto temp(*this);
@@ -102,10 +97,10 @@ namespace crossword::collections {
             return temp;
         }
 
-        void fill_element(element_type *element) {
+        void fill_element(std::pair<K, V> *element) {
             auto chunk_index = index / 3;
             auto index_inner = index - (chunk_index * 3);
-            map_chunk<V> *chunk = &map->chunks[chunk_index];
+            MapChunk<K, V> *chunk = &map->chunks[chunk_index];
             switch (index_inner) {
                 case 0:
                     element->first = chunk->key1;
@@ -124,45 +119,57 @@ namespace crossword::collections {
             }
         }
 
-        element_type get_element() {
-            element_type pair = std::make_pair((char) 0, nullptr);
+        std::pair<K, V> get_element() {
+            auto pair = std::make_pair(static_cast<K>(0), static_cast<V>(0));
             fill_element(&pair);
             return pair;
         }
 
-        element_type operator*() {
+        std::pair<K, V> operator*() {
             return get_element();
         }
     };
 
-    template <typename V>
-    class chunked_map {
+    static_assert(
+            sizeof(ChunkedMapIterator<uint8_t, void*>) == 2 * sizeof(void*),
+            "ChunkedMapIterator of char keys must be 2 pointers in size");
 
-        using iterator = chunked_map_iterator<V>;
+    template <typename K, typename V>
+    class ChunkedMap {
+
+        using iterator = ChunkedMapIterator<K, V>;
 
     public:
 
-        map_chunk<V>* chunks;
+        /// Map of chunks in this map.
+        MapChunk<K, V>* chunks;
+        /// How many chunks are currently allocated?
+        int16_t allocated_chunks;
+        /// How many elements are currently in this map?
         int16_t size;
-        int16_t capacity;
+
 
     private:
 
-        void resize_by_one(crossword::utils::arena<map_chunk<V>>* pool) {
-            auto old_chunk_count = capacity / 3;
-            auto new_chunks = pool->alloc(old_chunk_count + 1);
-            if (capacity > 0) {
-                for (auto i = 0; i < old_chunk_count; ++i) {
+        void resize_by_one(Arena<MapChunk<K, V>>* arena) {
+            auto new_chunks = arena->alloc(allocated_chunks + 1);
+            if (allocated_chunks > 0) {
+                for (auto i = 0; i < allocated_chunks; ++i) {
                     new_chunks[i] = chunks[i];
                 }
             }
             chunks = new_chunks;
-            capacity += 3;
+            allocated_chunks += 1;
         }
 
     public:
 
-        chunked_map() : chunks(nullptr), size(0), capacity(0) {
+        ChunkedMap() : chunks(nullptr), allocated_chunks(0), size(0) {
+        }
+
+        /// How many elements can be stored in the map without additional allocation?
+        inline int16_t capacity() const noexcept {
+            return allocated_chunks * 3;
         }
 
         /// Checks if the map does not contain any elements.
@@ -183,11 +190,10 @@ namespace crossword::collections {
         }
 
 
-        inline iterator find_chunk_linear(char key) {
+        inline iterator find_chunk_linear(K key) {
             int16_t chunk_index = 0;
             int16_t index_inner = 0;
-            int16_t full_index = 0;
-            int16_t allocated_chunks = capacity / 3;
+
             while (chunk_index < allocated_chunks) {
                 auto chunk = &chunks[chunk_index];
                 if (chunk->key1 == key) {
@@ -203,26 +209,27 @@ namespace crossword::collections {
                 ++chunk_index;
             }
 
-            full_index = std::min(static_cast<int16_t>(chunk_index * 3 + index_inner), size);
-            return iterator(this, full_index);
+            return iterator(this, std::min(static_cast<int16_t>(chunk_index * 3 + index_inner), size));
         }
 
-        iterator find(char key) {
+        iterator find(K key) {
             return find_chunk_linear(key);
         }
 
-        std::pair<std::pair<char, V*>, bool> try_emplace(
-            char key,
-            V* value,
-            crossword::utils::arena<map_chunk<V>>* pool) {
+        struct EmplaceResult {
+            std::pair<K, V> entry;
+            bool inserted;
+        };
+
+        EmplaceResult try_emplace(K key, V value, Arena<MapChunk<K, V>>* arena) {
 
             auto it = find(key);
             if (it != end()) {
-                return std::make_pair(it.get_element(), false);
+                return { it.get_element(), false };
             }
 
-            if (size == capacity) {
-                resize_by_one(pool);
+            if (size == capacity()) {
+                resize_by_one(arena);
             }
 
             auto chunk_index = size / 3;
@@ -246,9 +253,13 @@ namespace crossword::collections {
             }
 
             size++;
-            return std::make_pair(it.get_element(), true);
+            return { it.get_element(), true };
         }
     };
+
+    static_assert(
+            sizeof(ChunkedMap<uint8_t, void*>) <= 2 * sizeof(void*),
+            "ChunkedMap must not be larger than 2 pointers in size");
 }
 
 #endif // CROSSWORD_HELPER_CHUNKED_MAP_HPP
