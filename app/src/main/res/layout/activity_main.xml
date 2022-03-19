@@ -1,98 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <layout xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <data />
+
     <androidx.coordinatorlayout.widget.CoordinatorLayout
         xmlns:app="http://schemas.android.com/apk/res-auto"
+        xmlns:tools="http://schemas.android.com/tools"
         android:id="@+id/main_layout"
         android:layout_width="match_parent"
         android:layout_height="match_parent">
-
-        <com.google.android.material.appbar.AppBarLayout
-            android:id="@+id/appBarLayout"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content">
-
-            <com.google.android.material.appbar.MaterialToolbar
-                android:id="@+id/topAppBar"
-                style="@style/Widget.MaterialComponents.Toolbar.Primary"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content">
-
-                <androidx.appcompat.widget.LinearLayoutCompat
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:focusableInTouchMode="true"
-                    >
-
-                    <com.google.android.material.textfield.TextInputLayout
-                        android:id="@+id/user_input_layout"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="16dp"
-                        android:layout_marginTop="16dp"
-                        android:layout_marginEnd="16dp"
-                        android:layout_marginBottom="16dp"
-                        android:ems="10"
-                        android:hapticFeedbackEnabled="true"
-                        android:hint="@string/input_box"
-                        app:endIconMode="clear_text"
-                        app:helperTextEnabled="false"
-                        app:hintEnabled="false"
-                        app:layout_constraintEnd_toEndOf="parent"
-                        app:layout_constraintStart_toStartOf="parent"
-                        app:layout_constraintTop_toTopOf="parent"
-                        app:placeholderText="@string/input_box"
-                        app:placeholderTextAppearance="@style/TextAppearance.AppCompat.Small"
-                        app:startIconContentDescription="@string/input_query"
-                        app:startIconDrawable="@android:drawable/ic_menu_search">
-
-                        <com.google.android.material.textfield.TextInputEditText
-                            android:id="@+id/user_input_edittext"
-                            android:inputType="text"
-                            android:imeOptions="actionNone"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:paddingTop="12dp" />
-
-                    </com.google.android.material.textfield.TextInputLayout>
-
-
-
-                </androidx.appcompat.widget.LinearLayoutCompat>
-
-
-            </com.google.android.material.appbar.MaterialToolbar>
-            <com.google.android.material.tabs.TabLayout
-                android:id="@+id/tabLayout"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                app:tabMode="scrollable"
-                app:tabContentStart="56dp">
-
-                <com.google.android.material.tabs.TabItem
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/tab_missing_letters"
-                    />
-
-            </com.google.android.material.tabs.TabLayout>
-
-        </com.google.android.material.appbar.AppBarLayout>
-
-
-
-
-        <!-- Note: A RecyclerView can also be used -->
-        <androidx.core.widget.NestedScrollView
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            app:layout_behavior="@string/appbar_scrolling_view_behavior">
-
-            <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/recycler_view"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent" />
-
-        </androidx.core.widget.NestedScrollView>
 
         <FrameLayout
             android:id="@+id/loading_frame_layout"
@@ -118,7 +34,8 @@
             android:elevation="8dp"
             android:id="@+id/fragment_container_view"
             android:layout_width="match_parent"
-            android:layout_height="match_parent" />
+            android:layout_height="match_parent"
+            tools:layout="@layout/fragment_search" />
 
     </androidx.coordinatorlayout.widget.CoordinatorLayout>
 </layout>

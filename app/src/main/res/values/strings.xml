@@ -6,7 +6,7 @@
     <string name="tab_missing_letters">Missing letters</string>
     <string name="tab_rhymes">Rhymes</string>
     <string name="tab_anagrams">Anagrams</string>
-    <string name="operation_cancelled">A pending operation has been cancelled.</string>
-    <string name="operation_failed">A pending operation has failed.</string>
-    <string name="misc_three_dots">...</string>
+    <string name="operation_cancelled">A pending operation has been cancelled</string>
+    <string name="operation_failed">A pending operation has failed</string>
+    <string name="misc_three_dots">…</string>
 </resources>

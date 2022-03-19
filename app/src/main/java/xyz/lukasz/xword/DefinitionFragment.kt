@@ -7,6 +7,9 @@ import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import xyz.lukasz.xword.databinding.FragmentWordDefinitionBinding
 
+/**
+ * Fragment that displays the definition of the word.
+ */
 class DefinitionFragment(private val word: String) : Fragment(R.layout.fragment_word_definition) {
 
     private var binding: FragmentWordDefinitionBinding? = null

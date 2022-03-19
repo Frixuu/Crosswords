@@ -1,36 +1,25 @@
 package xyz.lukasz.xword
 
 import android.os.Bundle
-import android.text.Editable
-import android.text.TextWatcher
 import android.util.Log
 import android.view.View
 import android.view.ViewGroup
-import android.widget.EditText
+import android.view.inputmethod.InputMethodManager
 import android.widget.FrameLayout
 import androidx.appcompat.app.AppCompatActivity
-import androidx.fragment.app.add
 import androidx.fragment.app.commit
-import androidx.recyclerview.widget.DefaultItemAnimator
-import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
 import androidx.transition.Fade
 import androidx.transition.TransitionManager
-import com.android.volley.toolbox.Volley
 import com.google.android.material.snackbar.Snackbar
 import com.google.android.material.tabs.TabLayout
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
-import java.util.*
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var loadingFrameLayout: FrameLayout
     private lateinit var mainLayout: ViewGroup
-
-    private var mostRecentThread : Thread? = null
-    private val currentThreadLock = Any()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -39,69 +28,12 @@ class MainActivity : AppCompatActivity() {
         loadingFrameLayout = findViewById(R.id.loading_frame_layout)
         mainLayout = findViewById(R.id.main_layout)
 
-        val recyclerView = findViewById<RecyclerView>(R.id.recycler_view).apply {
-            setHasFixedSize(true)
-            layoutManager = LinearLayoutManager(this@MainActivity)
-            itemAnimator = DefaultItemAnimator()
+        val searchFragment = SearchFragment()
+        supportFragmentManager.commit {
+            add(R.id.fragment_container_view, searchFragment)
         }
 
-        val editText: EditText = findViewById(R.id.user_input_edittext)
-        editText.addTextChangedListener(object : TextWatcher {
-            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {
-
-            }
-
-            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
-
-            }
-
-            override fun afterTextChanged(s: Editable?) {
-                val currentDict = Dictionary.current
-                if (currentDict == null) {
-                    Log.w("MainActivity", "Current dictionary is null!")
-                    return
-                }
-                if (!currentDict.loaded) {
-                    Log.w("MainActivity", "Current dictionary exists, but is not loaded yet!")
-                    return
-                }
-                if (s == null) {
-                    Log.w("MainActivity", "Editable is null!")
-                    return
-                }
-
-                val searchThread = Thread {
-                    val currentThread = Thread.currentThread().apply { name = "Word search" }
-                    val limit = 250
-                    val results = currentDict.findPartial(s.toString(), null, limit)
-                    synchronized (currentThreadLock) {
-                        if (currentThread == mostRecentThread) {
-                            val cursor = results.lastOrNull()
-                            val resultList = mutableListOf(*results)
-                            Collections.sort(resultList, currentDict.collator)
-                            runOnUiThread {
-                                recyclerView.adapter = SingleWordAdapter(resultList, this@MainActivity)
-                                if (results.size >= limit) {
-                                    val resources = mainLayout.resources
-                                    val message = resources.getText(R.string.search_showing_only).toString()
-                                    Snackbar.make(mainLayout,
-                                        String.format(message, results.size),
-                                        Snackbar.LENGTH_LONG)
-                                        .show()
-                                }
-                            }
-                        }
-                    }
-                }
-
-                synchronized (currentThreadLock) {
-                    mostRecentThread = searchThread
-                }
-
-                searchThread.start()
-            }
-        })
-
+        /*
         val tabLayout: TabLayout = findViewById(R.id.tabLayout)
         tabLayout.addOnTabSelectedListener(object : TabLayout.OnTabSelectedListener {
 
@@ -119,13 +51,15 @@ class MainActivity : AppCompatActivity() {
             }
         })
 
+         */
+
         switchIndexCategory("unused")
     }
 
-    override fun onStop() {
-        super.onStop()
-    }
-
+    /**
+     * Pushes a fragment containing a word's definition.
+     * @param word Model of the word to display.
+     */
     fun showWordDefinition(word: String) {
         val container = R.id.fragment_container_view
         val fragment = DefinitionFragment(word)
@@ -140,16 +74,23 @@ class MainActivity : AppCompatActivity() {
             add(container, fragment)
             addToBackStack(null)
         }
+
+        val imm = getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager
+        if (imm.isAcceptingText) {
+            imm.hideSoftInputFromWindow(currentFocus?.windowToken, 0)
+        }
     }
 
     private fun switchIndexCategory(mode: String) {
-        val fadeDuration: Long = 150
         runOnUiThread {
-            // Fade the overlay in
-            TransitionManager.beginDelayedTransition(mainLayout, Fade().apply {
-                duration = fadeDuration
+
+            val fade = Fade().apply {
+                duration = 150
                 addTarget(loadingFrameLayout)
-            })
+            }
+
+            // Fade the overlay in
+            TransitionManager.beginDelayedTransition(mainLayout, fade)
             loadingFrameLayout.visibility = View.VISIBLE
 
             GlobalScope.launch {
@@ -158,11 +99,9 @@ class MainActivity : AppCompatActivity() {
                 Dictionary.current = dict
             }.invokeOnCompletion { cause ->
                 runOnUiThread {
+
                     // Fade the overlay out
-                    TransitionManager.beginDelayedTransition(mainLayout, Fade().apply {
-                        duration = fadeDuration
-                        addTarget(loadingFrameLayout)
-                    })
+                    TransitionManager.beginDelayedTransition(mainLayout, fade)
                     loadingFrameLayout.visibility = View.GONE
 
                     // If the job has been aborted, notify the user
