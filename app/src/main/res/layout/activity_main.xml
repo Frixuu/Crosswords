@@ -4,7 +4,6 @@
     <data />
 
     <androidx.coordinatorlayout.widget.CoordinatorLayout
-        xmlns:app="http://schemas.android.com/apk/res-auto"
         xmlns:tools="http://schemas.android.com/tools"
         android:id="@+id/main_layout"
         android:layout_width="match_parent"
@@ -31,7 +30,6 @@
         </FrameLayout>
 
         <androidx.fragment.app.FragmentContainerView
-            android:elevation="8dp"
             android:id="@+id/fragment_container_view"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
