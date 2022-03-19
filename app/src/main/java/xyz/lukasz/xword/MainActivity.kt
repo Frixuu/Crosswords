@@ -72,7 +72,7 @@ class MainActivity : AppCompatActivity() {
             )
             setReorderingAllowed(true)
             add(container, fragment)
-            addToBackStack(null)
+            addToBackStack("Definition of $word")
         }
 
         val imm = getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager
