@@ -1,17 +1,16 @@
 package xyz.lukasz.xword
 
-import android.app.appsearch.GlobalSearchSession
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
-import org.jsoup.Jsoup
 import xyz.lukasz.xword.databinding.FragmentWordDefinitionBinding
+import xyz.lukasz.xword.definitions.SjpDefinitionProvider
+import java.util.*
 
 /**
  * Fragment that displays the definition of the word.
@@ -19,6 +18,7 @@ import xyz.lukasz.xword.databinding.FragmentWordDefinitionBinding
 class DefinitionFragment(private val word: String) : Fragment(R.layout.fragment_word_definition) {
 
     private var binding: FragmentWordDefinitionBinding? = null
+    private val sjpProvider = SjpDefinitionProvider()
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -31,19 +31,16 @@ class DefinitionFragment(private val word: String) : Fragment(R.layout.fragment_
         // viewLifeCycleOwner.lifeCycleScope throws NetworkOnMainThreadException
         GlobalScope.launch {
             try {
-                val document = Jsoup.connect("https://sjp.pl/$word").get()
-                val definition = document.select("div > table.wtab")
-                    .mapNotNull { it.parent()?.nextElementSibling()?.html() }
-                    .flatMap { it.split("<br>")  }
-                    .map {
-                        val match = Regex("^\\d+\\. ").find(it, 0)
-                        if (match != null) {
-                            it.substring(match.range.last + 1)
+                val locale = Dictionary.current?.locale ?: Locale("pl", "PL")
+                val definition = sjpProvider.getDefinitions(word)
+                    .filter { it.locale == locale }
+                    .joinToString(separator = "\n") {
+                        if (it.word != word) {
+                            " - (${it.word}) ${it.definition}"
                         } else {
-                            it
+                            " - ${it.definition}"
                         }
                     }
-                    .joinToString(separator = "\n")
 
                 activity?.runOnUiThread {
                     binding?.definitionSjp = definition

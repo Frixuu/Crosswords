@@ -6,12 +6,15 @@ import android.text.TextWatcher
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
+import android.view.View.FOCUS_FORWARD
+import android.view.View.FOCUS_RIGHT
 import android.view.ViewGroup
 import android.view.inputmethod.EditorInfo
 import androidx.fragment.app.Fragment
 import com.google.android.material.snackbar.Snackbar
 import xyz.lukasz.xword.databinding.FragmentSearchBoxBinding
 import java.util.*
+
 
 class SearchBoxFragment(
     private val parentFragment: SearchFragment
@@ -30,7 +33,6 @@ class SearchBoxFragment(
         binding = FragmentSearchBoxBinding.inflate(inflater, container, false)
         binding?.userInputEdittext?.apply {
             addTextChangedListener(this@SearchBoxFragment)
-            imeOptions = EditorInfo.IME_ACTION_NONE
         }
         return binding?.root
     }
