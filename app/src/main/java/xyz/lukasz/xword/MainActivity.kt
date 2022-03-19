@@ -72,7 +72,7 @@ class MainActivity : AppCompatActivity() {
 
                 val searchThread = Thread {
                     val currentThread = Thread.currentThread().apply { name = "Word search" }
-                    val limit = 200
+                    val limit = 250
                     val results = currentDict.findPartial(s.toString(), null, limit)
                     synchronized (currentThreadLock) {
                         if (currentThread == mostRecentThread) {

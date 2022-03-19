@@ -68,9 +68,12 @@ Java_xyz_lukasz_xword_Dictionary_findPartialNative(JNIEnv *env,
 
     // Map found words to a Java string array
     auto string_clazz = env->FindClass("java/lang/String");
-    auto results = env->NewObjectArray(result_vec.size(), string_clazz, nullptr);
+    auto array_size = static_cast<jsize>(result_vec.size());
+    auto results = env->NewObjectArray(array_size, string_clazz, nullptr);
     for (size_t i = 0; i < result_vec.size(); ++i) {
-        env->SetObjectArrayElement(results, i, env->NewStringUTF(result_vec.at(i).c_str()));
+        auto found_word = env->NewStringUTF(result_vec.at(i).c_str());
+        env->SetObjectArrayElement(results, static_cast<jsize>(i), found_word);
+        env->DeleteLocalRef(found_word);
     }
 
     return results;

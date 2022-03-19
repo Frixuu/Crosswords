@@ -68,7 +68,6 @@ class Dictionary(private val lang: String, private val country: String) {
      * @param limit How many strings can be returned at most, a negative value means all of them.
      */
     fun findPartial(pattern: String, cursor: String? = null, limit: Int = -1): Array<String> {
-        assert(limit <= 500) { "Limit too high, possible JNI reference table overflow" }
         return if (loaded) {
             findPartialNative(nativePtr, pattern.lowercase(), cursor, limit)
         } else {
