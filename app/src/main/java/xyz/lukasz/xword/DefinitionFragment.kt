@@ -42,15 +42,11 @@ class DefinitionFragment(private val word: String) : Fragment(R.layout.fragment_
                         }
                     }
 
-                activity?.runOnUiThread {
-                    binding?.definitionSjp = definition
-                }
+                binding?.definitionSjp = definition
 
             } catch (e: Exception) {
                 Log.e("DefinitionFragment", "Error fetching definition", e)
-                activity?.runOnUiThread {
-                    binding?.definitionSjp = "[error]"
-                }
+                binding?.definitionSjp = "[error]"
             }
         }
 
