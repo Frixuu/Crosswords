@@ -8,7 +8,10 @@
 
 namespace crossword::memory {
 
-    template<typename T>
+    /// @brief Segment for an arena allocator.
+    /// @tparam T Type of the object this segment can allocate.
+    /// @tparam value_init Whether the allocated objects will be value- or default-initialized.
+    template<typename T, bool value_init = true>
     class ArenaSegment {
 
     private:
@@ -21,7 +24,12 @@ namespace crossword::memory {
 
         /// Creates a new segment that can hold n objects of type T.
         explicit ArenaSegment(size_t size) : size(size), used(0) {
-            data = std::make_unique<T[]>(size);
+            if constexpr (value_init) {
+                data = std::make_unique<T[]>(size);
+            } else {
+                // TODO: Replace with make_unique_for_overwrite when Clang supports it
+                data = std::unique_ptr<T[]>(new T[size]);
+            }
         }
 
         ArenaSegment(ArenaSegment&& other) noexcept : size(other.size), used(other.used) {
@@ -39,17 +47,17 @@ namespace crossword::memory {
         ArenaSegment& operator=(const ArenaSegment&) = delete;
 
         /// Returns true if no objects have been allocated in this segment yet.
-        inline bool empty() const noexcept {
+        constexpr inline bool empty() noexcept {
             return used == 0;
         }
 
         /// Returns true if all the allocated slots are taken.
-        inline bool full() const noexcept {
+        constexpr inline bool full() noexcept {
             return used == size;
         }
 
         /// Returns true if there are at least n free slots in this segment.
-        inline bool can_allocate(size_t n) const noexcept {
+        constexpr inline bool can_allocate(size_t n) noexcept {
             return used + n <= size;
         }
 
@@ -67,7 +75,9 @@ namespace crossword::memory {
             return x;
         }
 
-        void dealloc_last() {
+        /// If this segment is not empty, decrements the segment counter by 1.
+        /// THIS IS UNSAFE as it invalidates the last returned pointer. Use with care.
+        inline void dealloc_last() noexcept {
             if (!empty()) [[likely]] {
                 --used;
             }
@@ -78,7 +88,7 @@ namespace crossword::memory {
             sizeof(ArenaSegment<int>) == 3 * sizeof(void*),
             "ArenaSegment has to be 3 pointers in size");
 
-    template<typename T>
+    template<typename T, bool value_init = true>
     class Arena {
 
     private:
@@ -86,7 +96,7 @@ namespace crossword::memory {
         const size_t min_size = 512;
         const size_t typical_size = 16384;
 
-        std::vector<ArenaSegment<T>> segments;
+        std::vector<ArenaSegment<T, value_init>> segments;
         size_t current_segment;
 
         /// Creates a new segment with default size.
@@ -96,11 +106,11 @@ namespace crossword::memory {
 
         /// Creates a new segment that can hold at least n items.
         inline void push_new_segment(size_t segment_size) {
-            segments.push_back(ArenaSegment<T>(std::max(segment_size, min_size)));
+            segments.emplace_back(std::max(segment_size, min_size));
         }
 
         /// Moves an existing segment and attaches it to this Arena.
-        inline void push_existing_segment(ArenaSegment<T>&& segment) {
+        inline void push_existing_segment(ArenaSegment<T, value_init>&& segment) {
             segments.push_back(std::move(segment));
         }
 
@@ -112,7 +122,7 @@ namespace crossword::memory {
         }
 
         /// Moves all segments belonging to some other Arena to this Arena.
-        void merge(Arena<T>* other) {
+        void merge(Arena<T, value_init>* other) {
             auto it = std::make_move_iterator(other->segments.begin());
             auto end = std::make_move_iterator(other->segments.end());
             while (it != end) {
@@ -126,15 +136,19 @@ namespace crossword::memory {
             return alloc(1);
         }
 
-        /// Allocates an array of n objects.
+        /// Allocates a contiguous array of n objects.
         /// Returns a pointer to the first element of this array.
         T* alloc(size_t n) {
-            auto segment = &segments[current_segment];
+            auto segment = &segments.at(current_segment);
 
             while (!segment->can_allocate(n)) [[unlikely]] {
-                push_new_segment(n);
+
                 ++current_segment;
-                segment = &segments[current_segment];
+                if (current_segment == segments.size()) [[likely]] {
+                    push_new_segment(std::max(n, typical_size));
+                }
+
+                segment = &segments.at(current_segment);
             }
 
             return segment->alloc(n);
@@ -142,8 +156,8 @@ namespace crossword::memory {
 
         /// Deallocates the last allocated object
         /// (decrements the internal pointer by one).
-        void dealloc_last() {
-            auto segment = &segments[current_segment];
+        inline void dealloc_last() noexcept {
+            auto segment = &segments.at(current_segment);
             segment->dealloc_last();
         }
     };

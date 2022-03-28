@@ -77,7 +77,7 @@ namespace crossword {
                     key = utils::to_lower(key);
                 }
 
-                auto [entry, inserted] = children.try_emplace(key, node_pool->alloc(), chunk_pool);
+                auto [entry, inserted] = children.try_insert(key, node_pool->alloc(), chunk_pool);
                 if (!inserted) {
                     node_pool->dealloc_last();
                 }
@@ -173,7 +173,7 @@ namespace crossword {
                     for (auto other_child : other->children) {
                         auto result = children.find(other_child.first);
                         if (result == children.end()) {
-                            children.try_emplace(other_child.first, other_child.second, chunk_pool);
+                            children.try_insert(other_child.first, other_child.second, chunk_pool);
                         } else {
                             auto this_node = result.get_element().second;
                             auto other_node = other_child.second;

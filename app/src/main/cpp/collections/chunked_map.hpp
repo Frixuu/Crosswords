@@ -151,6 +151,8 @@ namespace crossword::collections {
 
     private:
 
+        /// Resizes this map by one chunk.
+        /// This reallocates the chunks, making the pointers to them invalid.
         void resize_by_one(Arena<MapChunk<K, V>>* arena) {
             auto new_chunks = arena->alloc(allocated_chunks + 1);
             if (allocated_chunks > 0) {
@@ -189,7 +191,7 @@ namespace crossword::collections {
             return iterator(this, size);
         }
 
-
+        /// Tries to find provided key, using linear search.
         inline iterator find_chunk_linear(K key) {
             int16_t chunk_index = 0;
             int16_t index_inner = 0;
@@ -212,16 +214,17 @@ namespace crossword::collections {
             return iterator(this, std::min(static_cast<int16_t>(chunk_index * 3 + index_inner), size));
         }
 
+        /// Tries to find a provided key in the map.
         iterator find(K key) {
             return find_chunk_linear(key);
         }
 
-        struct EmplaceResult {
+        struct InsertResult {
             std::pair<K, V> entry;
             bool inserted;
         };
 
-        EmplaceResult try_emplace(K key, V value, Arena<MapChunk<K, V>>* arena) {
+        InsertResult try_insert(K key, V value, Arena<MapChunk<K, V>>* arena) {
 
             auto it = find(key);
             if (it != end()) {

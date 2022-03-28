@@ -26,7 +26,7 @@ namespace crossword {
         std::unique_ptr<WordNode> forward_index;
         std::unique_ptr<Arena<WordNode>> node_arena;
         std::unique_ptr<Arena<MapChunk<uint8_t, WordNode*>>> index_map_chunk_arena;
-        std::unique_ptr<Arena<std::string>> string_arena;
+        std::unique_ptr<Arena<std::string, false>> string_arena;
 
         /// Parses lines from a UTF-8 encoded buffer and adds them to the dictionary.
         /// @param buffer Pointer to the data buffer.
@@ -40,7 +40,7 @@ namespace crossword {
             // Cache not to lookup first parent
             char last_first_byte = 'a';
             auto last_ancestor = forward_index->children
-                .try_emplace('a', node_arena->alloc(), index_map_chunk_arena.get())
+                .try_insert('a', node_arena->alloc(), index_map_chunk_arena.get())
                 .entry.second;
 
             auto index = start;
@@ -69,7 +69,8 @@ namespace crossword {
                             // next words will use the new parent
                             last_first_byte = first_letter;
                             last_ancestor = forward_index->children
-                                .try_emplace(first_letter, node_arena->alloc(), index_map_chunk_arena.get())
+                                    .try_insert(first_letter, node_arena->alloc(),
+                                                index_map_chunk_arena.get())
                                 .entry.second;
                             last_ancestor->push_word(word_ptr, 1, node_arena.get(), index_map_chunk_arena.get());
                         }
@@ -93,7 +94,7 @@ namespace crossword {
             forward_index(std::make_unique<WordNode>()),
             node_arena(std::make_unique<Arena<WordNode>>()),
             index_map_chunk_arena(std::make_unique<Arena<MapChunk<uint8_t, WordNode*>>>()),
-            string_arena(std::make_unique<Arena<std::string>>()) {
+            string_arena(std::make_unique<Arena<std::string, false>>()) {
         }
 
         Dictionary(const Dictionary &) = delete;
