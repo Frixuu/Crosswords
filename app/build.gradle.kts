@@ -1,60 +1,63 @@
 plugins {
     id("com.android.application")
-    id("kotlin-android")
-    id("kotlin-kapt")
+    kotlin("android")
+    kotlin("kapt")
     id("dagger.hilt.android.plugin")
 }
 
 android {
-    compileSdkVersion 31
-    buildToolsVersion "31.0.0"
+    compileSdk = 31
+    buildToolsVersion = "31.0.0"
 
     androidResources {
         // Compressed resources cannot be mmapped
-        noCompress "txt"
+        noCompress("txt")
     }
 
     buildFeatures {
-        dataBinding true
+        dataBinding = true
     }
 
     defaultConfig {
-        applicationId "xyz.lukasz.xword"
-        minSdkVersion 21
-        targetSdkVersion 31
-        versionCode 2
-        versionName "1.1"
+        applicationId = "xyz.lukasz.xword"
+        minSdk = 21
+        targetSdk = 31
+        versionCode = 2
+        versionName = "1.1"
 
-        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
         externalNativeBuild {
             cmake {
-                cppFlags "-std=c++20 -Wall -Wextra -pedantic"
+                cppFlags("-std=c++20 -Wall -Wextra -pedantic")
             }
         }
 
         ndk {
-            abiFilters "x86_64", "armeabi-v7a", "arm64-v8a"
+            abiFilters.addAll(setOf("x86_64", "armeabi-v7a", "arm64-v8a"))
         }
     }
 
     buildTypes {
-        release {
-            shrinkResources true
-            minifyEnabled true
-            proguardFiles getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro"
+        getByName("release") {
+            isShrinkResources = true
+            isMinifyEnabled = true
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
         }
     }
 
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
+        sourceCompatibility = JavaVersion.VERSION_1_8
+        targetCompatibility = JavaVersion.VERSION_1_8
     }
 
-    ndkVersion "24.0.8215888"
+    ndkVersion = "24.0.8215888"
     externalNativeBuild {
         cmake {
-            path "CMakeLists.txt"
+            path("CMakeLists.txt")
         }
     }
 
