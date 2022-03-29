@@ -2,7 +2,6 @@ package xyz.lukasz.xword
 
 import android.os.Bundle
 import android.text.Editable
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -51,7 +50,7 @@ class SearchBoxFragment(
             return
         }
 
-        if (!currentDict.loaded) {
+        if (!currentDict.ready) {
             Timber.w("Current dictionary exists, but is not loaded yet!")
             return
         }

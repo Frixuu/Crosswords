@@ -28,4 +28,10 @@ class CrosswordHelperApplication : Application() {
             return context.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
         }
     }
+
+    companion object {
+        init {
+            System.loadLibrary("native-lib")
+        }
+    }
 }

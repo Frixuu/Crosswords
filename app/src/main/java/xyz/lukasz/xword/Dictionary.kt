@@ -2,6 +2,7 @@ package xyz.lukasz.xword
 
 import android.app.Activity
 import android.content.res.AssetManager
+import xyz.lukasz.xword.native.NativeSharedPointer
 import java.text.Collator
 import java.util.*
 
@@ -24,13 +25,13 @@ class Dictionary(private val lang: String, private val country: String) {
     /**
      * A pointer to a native Dictionary object.
      */
-    private var nativePtr: Long = 0
+    private var pointer = NativeSharedPointer.nil()
 
     /**
      * Returns true if the internal pointer
      * points to a valid native Dictionary object.
      */
-    val loaded: Boolean get() = nativePtr != 0L
+    val ready: Boolean get() = !pointer.nil
 
     /**
      * Attempts to load an internal asset
@@ -52,14 +53,12 @@ class Dictionary(private val lang: String, private val country: String) {
      * Attempts to load an internal asset under a specified path.
      */
     fun loadFromAsset(assetManager: AssetManager, filename: String) {
-        val oldPtr = nativePtr
-        nativePtr = 0
+        pointer.setPointer(0L)
         val threadCount = Runtime.getRuntime().availableProcessors()
-        val ptr = loadNative(assetManager, filename, oldPtr, threadCount)
-        if (ptr == 0L) {
+        pointer = loadNative(assetManager, filename, threadCount)
+        if (pointer.nil) {
             throw Exception("Native loading failed")
         }
-        nativePtr = ptr
     }
 
     /**
@@ -68,8 +67,8 @@ class Dictionary(private val lang: String, private val country: String) {
      * @param limit How many strings can be returned at most, a negative value means all of them.
      */
     fun findPartial(pattern: String, cursor: String? = null, limit: Int = -1): Array<String> {
-        return if (loaded) {
-            findPartialNative(nativePtr, pattern.lowercase(), cursor, limit)
+        return if (ready) {
+            findPartialNative(pointer.getPointer(), pattern.lowercase(), cursor, limit)
         } else {
             emptyArray()
         }
@@ -83,9 +82,8 @@ class Dictionary(private val lang: String, private val country: String) {
     private external fun loadNative(
         assetManager: AssetManager,
         filename: String,
-        oldPtr: Long,
         concLevel: Int
-    ): Long
+    ): NativeSharedPointer
 
     /**
      * A native method that traverses a native Dictionary indices
@@ -100,8 +98,5 @@ class Dictionary(private val lang: String, private val country: String) {
 
     companion object {
         var current: Dictionary? = null
-        init {
-            System.loadLibrary("native-lib")
-        }
     }
 }
