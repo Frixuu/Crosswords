@@ -1,7 +1,8 @@
 package xyz.lukasz.xword.definitions
 
-import java.util.*
-
+/**
+ * An object that provides definitions for given words.
+ */
 interface DefinitionProvider {
     fun getDefinitions(word: String): List<Definition>
 }

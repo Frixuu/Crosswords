@@ -1,6 +1,6 @@
 package xyz.lukasz.xword.definitions
 
-import java.util.*
+import java.util.Locale
 
 /**
  * An abstract class that provides definitions only for a specific locale.

@@ -7,11 +7,9 @@ import org.jsoup.Jsoup
  */
 class SjpDefinitionProvider : LocaleSpecificDefinitionProvider("pl", "PL") {
 
-    private val startsWithNumberRegex: Regex = Regex("^\\d+\\. ")
-
     override fun getDefinitions(word: String): List<Definition> {
-        val url = "https://sjp.pl/$word";
-        val connection = Jsoup.connect(url);
+        val url = "https://sjp.pl/$word"
+        val connection = Jsoup.connect(url)
         val document = connection.get()
 
         return document.select("div > table.wtab")
@@ -26,11 +24,15 @@ class SjpDefinitionProvider : LocaleSpecificDefinitionProvider("pl", "PL") {
                     if (match != null) {
                         definition = definition.substring(match.range.last + 1)
                     }
-                    definition = definition.trimEnd(';')
                     definition = definition.replace("&nbsp;", " ")
+                    definition = definition.trimEnd(';')
                     Definition(definedWord, definition, locale)
                 } ?: emptyList()
             }
             .toList()
+    }
+
+    companion object {
+        @JvmStatic private val startsWithNumberRegex: Regex = Regex("^\\d+\\. ")
     }
 }
