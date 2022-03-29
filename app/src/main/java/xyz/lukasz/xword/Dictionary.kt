@@ -2,7 +2,7 @@ package xyz.lukasz.xword
 
 import android.app.Activity
 import android.content.res.AssetManager
-import xyz.lukasz.xword.native.NativeSharedPointer
+import xyz.lukasz.xword.interop.NativeSharedPointer
 import java.text.Collator
 import java.util.*
 

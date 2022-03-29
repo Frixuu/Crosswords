@@ -38,7 +38,7 @@ Java_xyz_lukasz_xword_Dictionary_loadNative(JNIEnv *env,
     }
 
     AAsset_close(asset);
-    auto wrapper_class = env->FindClass("xyz/lukasz/xword/native/NativeSharedPointer");
+    auto wrapper_class = env->FindClass("xyz/lukasz/xword/interop/NativeSharedPointer");
     auto constructor_id = env->GetMethodID(wrapper_class, "<init>", "(J)V");
     auto wrapper = env->NewObject(wrapper_class, constructor_id, reinterpret_cast<jlong>(dictionary));
     return wrapper;
@@ -77,9 +77,9 @@ Java_xyz_lukasz_xword_Dictionary_findPartialNative(JNIEnv *env,
 
 extern "C"
 JNIEXPORT void JNICALL
-Java_xyz_lukasz_xword_native_NativeSharedPointer_freeImpl([[maybe_unused]] JNIEnv *env,
-                                                          [[maybe_unused]] jclass clazz,
-                                                          jlong ptr) {
+Java_xyz_lukasz_xword_interop_NativeSharedPointer_freeImpl([[maybe_unused]] JNIEnv *env,
+                                                           [[maybe_unused]] jclass clazz,
+                                                           jlong ptr) {
 
     auto ptr_to_shared_pointer = reinterpret_cast<std::shared_ptr<void*>*>(ptr);
     delete ptr_to_shared_pointer;

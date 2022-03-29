@@ -1,4 +1,4 @@
-package xyz.lukasz.xword.native
+package xyz.lukasz.xword.interop
 
 import java.util.concurrent.atomic.AtomicLong
 
