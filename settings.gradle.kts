@@ -3,7 +3,7 @@ include(":app")
 
 dependencyResolutionManagement {
     versionCatalogs {
-        libs {
+        create("libs") {
             version("hilt", "2.41")
             version("kotlin", "1.6.10")
         }
