@@ -10,6 +10,8 @@
 
 using namespace crossword::utils;
 using crossword::Dictionary;
+using crossword::utils::android::AssetManager;
+using crossword::utils::android::AssetOpenMode;
 
 extern "C"
 JNIEXPORT jobject JNICALL
@@ -20,24 +22,23 @@ Java_xyz_lukasz_xword_Dictionary_loadNative(JNIEnv *env,
                                             jint par_level) {
 
     // Mmap the whole uncompressed file
-    auto asset_manager = AAssetManager_fromJava(env, jasset_mgr);
     auto filename = android::string_from_java(env, path);
-    auto asset = AAssetManager_open(asset_manager, filename.c_str(), AASSET_MODE_BUFFER);
+    auto asset_manager = AssetManager::from_java(env, jasset_mgr);
+    auto asset = asset_manager.open_asset(filename, AssetOpenMode::Buffer);
 
     off_t start = 0;
-    off_t length = AAsset_getLength(asset);
+    off_t length = asset.length();
 
     std::shared_ptr<Dictionary>* dictionary = nullptr;
-    auto fd = AAsset_openFileDescriptor(asset, &start, &length);
+    auto fd = asset.open_file_descriptor(&start, &length);
     if (fd >= 0) {
-        auto buffer = static_cast<const char*>(AAsset_getBuffer(asset));
+        auto buffer = asset.get_buffer();
         if (buffer != nullptr) {
             dictionary = new std::shared_ptr<Dictionary>(new Dictionary());
-            dictionary->get()->load_from_buffer_par(buffer, length, par_level);
+            dictionary->get()->load_from_buffer_par(buffer, static_cast<int>(length), par_level);
         }
     }
 
-    AAsset_close(asset);
     auto wrapper_class = env->FindClass("xyz/lukasz/xword/interop/NativeSharedPointer");
     auto constructor_id = env->GetMethodID(wrapper_class, "<init>", "(J)V");
     auto wrapper = env->NewObject(wrapper_class, constructor_id, reinterpret_cast<jlong>(dictionary));
