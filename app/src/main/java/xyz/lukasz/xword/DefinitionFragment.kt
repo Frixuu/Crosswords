@@ -1,13 +1,15 @@
 package xyz.lukasz.xword
 
 import android.os.Bundle
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
-import kotlinx.coroutines.GlobalScope
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import timber.log.Timber
 import xyz.lukasz.xword.databinding.FragmentWordDefinitionBinding
 import xyz.lukasz.xword.definitions.SjpDefinitionProvider
 import java.util.*
@@ -24,16 +26,38 @@ class DefinitionFragment(private val word: String) : Fragment(R.layout.fragment_
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
-        binding = FragmentWordDefinitionBinding.inflate(inflater, container, false)
-        binding?.word = word
+    ): View {
+        val binding = FragmentWordDefinitionBinding.inflate(inflater, container, false)
+        binding.word = word
 
-        // viewLifeCycleOwner.lifeCycleScope throws NetworkOnMainThreadException
-        GlobalScope.launch {
+        val locale = Dictionary.current?.locale ?: Locale("pl", "PL")
+        tryFetchDefinitionsAndUpdate(word, locale)
+
+        this.binding = binding
+        return binding.root
+    }
+
+    /**
+     * This method uses a [SjpDefinitionProvider] to fetch definitions of the word
+     * and then updates the UI with the results accordingly.
+     * This method is safe to use from any thread.
+     * @param word The word to fetch definitions for.
+     * @param locale The locale to use for fetching definitions.
+     */
+    private fun tryFetchDefinitionsAndUpdate(word: String, locale: Locale) {
+        lifecycleScope.launch {
             try {
-                val locale = Dictionary.current?.locale ?: Locale("pl", "PL")
-                val definition = sjpProvider.getDefinitions(word)
-                    .filter { it.locale == locale }
+
+                val definitions = withContext(Dispatchers.IO) {
+                    sjpProvider.getDefinitions(word)
+                        .filter { it.locale == locale }
+                }
+
+                Timber.tag("DefinitionFragment")
+                    .i("Fetched %d definitions for word '%s' in locale %s",
+                        definitions.size, word, locale.displayLanguage)
+
+                val definitionText = definitions
                     .joinToString(separator = "\n") {
                         if (it.word != word) {
                             " - (${it.word}) ${it.definition}"
@@ -42,15 +66,13 @@ class DefinitionFragment(private val word: String) : Fragment(R.layout.fragment_
                         }
                     }
 
-                binding?.definitionSjp = definition
+                binding?.definitionSjp = definitionText
 
             } catch (e: Exception) {
-                Log.e("DefinitionFragment", "Error fetching definition", e)
+                Timber.e(e, "Error fetching definition")
                 binding?.definitionSjp = "[error]"
             }
         }
-
-        return binding?.root
     }
 
     override fun onDestroyView() {

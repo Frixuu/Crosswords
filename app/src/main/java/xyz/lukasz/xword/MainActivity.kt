@@ -2,35 +2,32 @@ package xyz.lukasz.xword
 
 import android.os.Bundle
 import android.view.View
-import android.view.ViewGroup
 import android.view.inputmethod.InputMethodManager
-import android.widget.FrameLayout
 import androidx.appcompat.app.AppCompatActivity
+import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.commit
+import androidx.lifecycle.lifecycleScope
 import androidx.transition.Fade
 import androidx.transition.TransitionManager
-import com.google.android.material.snackbar.Snackbar
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
+import xyz.lukasz.xword.databinding.ActivityMainBinding
+import xyz.lukasz.xword.utils.showSnackbar
+import javax.inject.Inject
 
 @AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
 
-    private lateinit var loadingFrameLayout: FrameLayout
-    private lateinit var mainLayout: ViewGroup
+    private lateinit var binding: ActivityMainBinding
+    @Inject lateinit var imm: InputMethodManager
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
-
-        loadingFrameLayout = findViewById(R.id.loading_frame_layout)
-        mainLayout = findViewById(R.id.main_layout)
+        binding = DataBindingUtil.setContentView(this, R.layout.activity_main)
 
         val searchFragment = SearchFragment()
         supportFragmentManager.commit {
-            add(R.id.fragment_container_view, searchFragment)
+            add(binding.fragmentContainerView.id, searchFragment, "search")
         }
 
         /*
@@ -61,8 +58,6 @@ class MainActivity : AppCompatActivity() {
      * @param word Model of the word to display.
      */
     fun showWordDefinition(word: String) {
-        val container = R.id.fragment_container_view
-        val fragment = DefinitionFragment(word)
         supportFragmentManager.commit {
             setCustomAnimations(
                 R.anim.slide_in,
@@ -70,14 +65,23 @@ class MainActivity : AppCompatActivity() {
                 R.anim.fade_in,
                 R.anim.slide_out
             )
-            setReorderingAllowed(true)
-            add(container, fragment)
+            add(binding.fragmentContainerView.id, DefinitionFragment(word))
             addToBackStack("Definition of $word")
+            setReorderingAllowed(true)
         }
 
-        val imm = getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager
+        hideSoftwareKeyboard()
+    }
+
+    /**
+     * If some focused element is accepting text,
+     * blurs it and hides the software keyboard.
+     */
+    private fun hideSoftwareKeyboard() {
         if (imm.isAcceptingText) {
-            imm.hideSoftInputFromWindow(currentFocus?.windowToken, 0)
+            val focus = currentFocus ?: return
+            imm.hideSoftInputFromWindow(focus.windowToken, 0)
+            focus.clearFocus()
         }
     }
 
@@ -86,36 +90,29 @@ class MainActivity : AppCompatActivity() {
 
             val fade = Fade().apply {
                 duration = 150
-                addTarget(loadingFrameLayout)
+                addTarget(binding.loadingFrameLayout)
             }
 
             // Fade the overlay in
-            TransitionManager.beginDelayedTransition(mainLayout, fade)
-            loadingFrameLayout.visibility = View.VISIBLE
+            TransitionManager.beginDelayedTransition(binding.mainLayout, fade)
+            binding.loadingFrameLayout.visibility = View.VISIBLE
 
-            GlobalScope.launch {
-                val dict = Dictionary.current ?: Dictionary("pl", "PL")
+            val dict = Dictionary.current ?: Dictionary("pl", "PL")
+            lifecycleScope.launch(Dispatchers.IO) {
                 dict.loadFromAsset(this@MainActivity)
                 Dictionary.current = dict
             }.invokeOnCompletion { cause ->
                 runOnUiThread {
-
                     // Fade the overlay out
-                    TransitionManager.beginDelayedTransition(mainLayout, fade)
-                    loadingFrameLayout.visibility = View.GONE
+                    TransitionManager.beginDelayedTransition(binding.mainLayout, fade)
+                    binding.loadingFrameLayout.visibility = View.GONE
 
                     // If the job has been aborted, notify the user
-                    if (cause != null) {
-                        val resources = mainLayout.resources
-                        Snackbar.make(
-                            mainLayout,
-                            resources.getString(if (cause is CancellationException) {
-                                R.string.operation_cancelled
-                            } else {
-                                R.string.operation_failed
-                            }),
-                            Snackbar.LENGTH_LONG)
-                            .show()
+                    val layout = binding.mainLayout
+                    when (cause) {
+                        null -> { }
+                        is CancellationException -> layout.showSnackbar(R.string.operation_cancelled)
+                        else -> layout.showSnackbar(R.string.operation_failed)
                     }
                 }
             }

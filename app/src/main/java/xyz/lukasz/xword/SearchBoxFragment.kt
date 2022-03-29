@@ -7,6 +7,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
+import timber.log.Timber
 import xyz.lukasz.xword.databinding.FragmentSearchBoxBinding
 import xyz.lukasz.xword.utils.showSnackbar
 import java.util.*
@@ -40,18 +41,18 @@ class SearchBoxFragment(
     override fun afterTextChanged(s: Editable?) {
 
         if (s == null) {
-            Log.w("SearchBoxFragment", "Editable is null!")
+            Timber.w("Editable is null!")
             return
         }
 
         val currentDict = Dictionary.current
         if (currentDict == null) {
-            Log.w("SearchBoxFragment", "Current dictionary is null!")
+            Timber.w("Current dictionary is null!")
             return
         }
 
         if (!currentDict.loaded) {
-            Log.w("SearchBoxFragment", "Current dictionary exists, but is not loaded yet!")
+            Timber.w("Current dictionary exists, but is not loaded yet!")
             return
         }
 
@@ -60,7 +61,7 @@ class SearchBoxFragment(
             val currentThread = Thread.currentThread()
             val limit = 250
             val results = currentDict.findPartial(pattern, null, limit)
-            Log.i("SearchBoxFragment", "Found ${results.size} results")
+            Timber.i("Found %d results for pattern '%s'", results.size, pattern)
 
             // If these results are already out of date, don't bother updating the UI
             if (currentThread != mostRecentThread.get()) {
