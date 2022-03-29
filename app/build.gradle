@@ -28,7 +28,7 @@ android {
 
         externalNativeBuild {
             cmake {
-                cppFlags "-std=c++20 -Wall -Wextra -pedantic"
+                cppFlags "-std=c++20 -O2 -Wall -Wextra -pedantic"
             }
         }
 
