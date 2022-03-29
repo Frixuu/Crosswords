@@ -1,11 +1,13 @@
 package xyz.lukasz.xword.definitions
 
 import org.jsoup.Jsoup
+import javax.inject.Inject
 
 /**
  * Fetches definitions of Polish words from sjp.pl.
  */
-class SjpDefinitionProvider : LocaleSpecificDefinitionProvider("pl", "PL") {
+class SjpDefinitionProvider @Inject constructor()
+    : LocaleSpecificDefinitionProvider("pl", "PL") {
 
     override fun getDefinitions(word: String): List<Definition> {
         val url = "https://sjp.pl/$word"
@@ -33,6 +35,7 @@ class SjpDefinitionProvider : LocaleSpecificDefinitionProvider("pl", "PL") {
     }
 
     companion object {
-        @JvmStatic private val startsWithNumberRegex: Regex = Regex("^\\d+\\. ")
+        @JvmStatic
+        private val startsWithNumberRegex: Regex = Regex("^\\d+\\. ")
     }
 }

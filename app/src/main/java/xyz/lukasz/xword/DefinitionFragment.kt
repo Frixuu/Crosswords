@@ -6,21 +6,24 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
+import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import timber.log.Timber
 import xyz.lukasz.xword.databinding.FragmentWordDefinitionBinding
-import xyz.lukasz.xword.definitions.SjpDefinitionProvider
+import xyz.lukasz.xword.definitions.DefinitionProvider
 import java.util.*
+import javax.inject.Inject
 
 /**
  * Fragment that displays the definition of the word.
  */
+@AndroidEntryPoint
 class DefinitionFragment(private val word: String) : Fragment(R.layout.fragment_word_definition) {
 
     private var binding: FragmentWordDefinitionBinding? = null
-    private val sjpProvider = SjpDefinitionProvider()
+    @Inject lateinit var definitionProvider: DefinitionProvider
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -38,7 +41,7 @@ class DefinitionFragment(private val word: String) : Fragment(R.layout.fragment_
     }
 
     /**
-     * This method uses a [SjpDefinitionProvider] to fetch definitions of the word
+     * This method uses a [DefinitionProvider] to fetch definitions of the word
      * and then updates the UI with the results accordingly.
      * This method is safe to use from any thread.
      * @param word The word to fetch definitions for.
@@ -49,7 +52,7 @@ class DefinitionFragment(private val word: String) : Fragment(R.layout.fragment_
             try {
 
                 val definitions = withContext(Dispatchers.IO) {
-                    sjpProvider.getDefinitions(word)
+                    definitionProvider.getDefinitions(word)
                         .filter { it.locale == locale }
                 }
 
