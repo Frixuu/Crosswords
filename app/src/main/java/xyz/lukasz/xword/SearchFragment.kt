@@ -8,13 +8,11 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.commit
 import androidx.recyclerview.widget.DefaultItemAnimator
 import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
 import xyz.lukasz.xword.databinding.FragmentSearchBinding
 
 class SearchFragment: Fragment(R.layout.fragment_search) {
 
     private var binding: FragmentSearchBinding? = null
-    val recyclerView: RecyclerView? get() = binding?.recyclerView
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -34,6 +32,17 @@ class SearchFragment: Fragment(R.layout.fragment_search) {
         }
 
         return binding?.root
+    }
+
+    /**
+     * This method populates the result view with the given list of words.
+     * It is safe to call from any thread.
+     */
+    fun updateSearchResults(results: List<String>) {
+        this.requireView().post {
+            val wordAdapter = SingleWordAdapter(results, requireActivity() as MainActivity)
+            binding?.recyclerView?.adapter = wordAdapter
+        }
     }
 
     override fun onDestroyView() {

@@ -2,53 +2,39 @@ package xyz.lukasz.xword
 
 import android.os.Bundle
 import android.text.Editable
-import android.text.TextWatcher
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
-import android.view.View.FOCUS_FORWARD
-import android.view.View.FOCUS_RIGHT
 import android.view.ViewGroup
-import android.view.inputmethod.EditorInfo
 import androidx.fragment.app.Fragment
-import com.google.android.material.snackbar.Snackbar
 import xyz.lukasz.xword.databinding.FragmentSearchBoxBinding
+import xyz.lukasz.xword.utils.showSnackbar
 import java.util.*
-
+import java.util.concurrent.atomic.AtomicReference
+import kotlin.concurrent.thread
 
 class SearchBoxFragment(
     private val parentFragment: SearchFragment
-) : Fragment(R.layout.fragment_search_box), TextWatcher {
+) : Fragment(R.layout.fragment_search_box), TextChangedListener {
 
     private var binding: FragmentSearchBoxBinding? = null
-
-    private var mostRecentThread: Thread? = null
-    private val currentThreadLock = Any()
+    private val mostRecentThread = AtomicReference<Thread?>(null)
 
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
-        binding = FragmentSearchBoxBinding.inflate(inflater, container, false)
-        binding?.userInputEdittext?.apply {
-            addTextChangedListener(this@SearchBoxFragment)
-        }
-        return binding?.root
+    ): View {
+        val binding = FragmentSearchBoxBinding.inflate(inflater, container, false)
+        binding.userInputEdittext.addTextChangedListener(this)
+        this.binding = binding
+        return binding.root
     }
 
     override fun onDestroyView() {
         super.onDestroyView()
         binding?.userInputEdittext?.removeTextChangedListener(this)
         binding = null
-    }
-
-    override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {
-
-    }
-
-    override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
-
     }
 
     override fun afterTextChanged(s: Editable?) {
@@ -69,42 +55,33 @@ class SearchBoxFragment(
             return
         }
 
-        val searchThread = Thread {
-            val currentThread = Thread.currentThread().apply { name = "Word search" }
+        val pattern = s.toString()
+        val searchThread = thread(name = "Missing letter search ($pattern)", start = false) {
+            val currentThread = Thread.currentThread()
             val limit = 250
-            val results = currentDict.findPartial(s.toString(), null, limit)
+            val results = currentDict.findPartial(pattern, null, limit)
             Log.i("SearchBoxFragment", "Found ${results.size} results")
-            synchronized(currentThreadLock) {
-                if (currentThread == mostRecentThread) {
-                    val cursor = results.lastOrNull()
-                    val resultList = mutableListOf(*results)
-                    Collections.sort(resultList, currentDict.collator)
-                    activity?.run {
-                        runOnUiThread {
-                            parentFragment.recyclerView?.adapter =
-                                SingleWordAdapter(resultList, this as MainActivity)
-                            if (results.size >= limit) {
-                                val mainLayout: ViewGroup = findViewById(R.id.main_layout)
-                                val resources = mainLayout.resources
-                                val message =
-                                    resources.getText(R.string.search_showing_only).toString()
-                                Snackbar.make(
-                                    mainLayout,
-                                    String.format(message, results.size),
-                                    Snackbar.LENGTH_LONG
-                                )
-                                    .show()
-                            }
-                        }
-                    }
-                }
+
+            // If these results are already out of date, don't bother updating the UI
+            if (currentThread != mostRecentThread.get()) {
+                return@thread
+            }
+
+            val cursor = results.lastOrNull()
+            val resultList = mutableListOf(*results)
+            Collections.sort(resultList, currentDict.collator)
+            parentFragment.updateSearchResults(resultList)
+
+            if (results.size >= limit) {
+                val mainLayout: ViewGroup = requireActivity().findViewById(R.id.main_layout)
+                val message = mainLayout.resources
+                    .getText(R.string.search_showing_only)
+                    .toString()
+                mainLayout.showSnackbar(String.format(message, results.size))
             }
         }
 
-        synchronized(currentThreadLock) {
-            mostRecentThread = searchThread
-        }
-
+        mostRecentThread.set(searchThread)
         searchThread.start()
     }
 }
