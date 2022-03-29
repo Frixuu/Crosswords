@@ -1,2 +1,11 @@
 rootProject.name = "Crossword Helper"
-include ':app'
+include(":app")
+
+dependencyResolutionManagement {
+    versionCatalogs {
+        libs {
+            version("hilt", "2.41")
+            version("kotlin", "1.6.10")
+        }
+    }
+}

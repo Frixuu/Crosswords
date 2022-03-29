@@ -65,10 +65,10 @@ android {
 
 dependencies {
 
-    implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
+    implementation "org.jetbrains.kotlin:kotlin-stdlib:${libs.versions.kotlin.get()}"
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.6.0"
 
-    implementation "com.google.dagger:hilt-android:$hilt_version"
+    implementation "com.google.dagger:hilt-android:${libs.versions.hilt.get()}"
     implementation "androidx.core:core-ktx:1.7.0"
     implementation "androidx.appcompat:appcompat:1.4.1"
     implementation "com.android.volley:volley:1.2.1"
@@ -79,7 +79,7 @@ dependencies {
     implementation "androidx.legacy:legacy-support-v4:1.0.0"
     implementation "org.jsoup:jsoup:1.14.3"
 
-    kapt "com.google.dagger:hilt-compiler:$hilt_version"
+    kapt "com.google.dagger:hilt-compiler:${libs.versions.hilt.get()}"
 
     testImplementation "junit:junit:4.13.2"
     androidTestImplementation "androidx.test.ext:junit:1.1.3"
