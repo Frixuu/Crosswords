@@ -11,17 +11,14 @@ namespace crossword::memory {
     /// @brief Segment for an arena allocator.
     /// @tparam T Type of the object this segment can allocate.
     /// @tparam value_init Whether the allocated objects will be value- or default-initialized.
-    template<typename T, bool value_init = true>
+    template <typename T, bool value_init = true>
     class ArenaSegment {
-
     private:
-
         std::unique_ptr<T[]> data;
         size_t size;
         size_t used;
 
     public:
-
         /// Creates a new segment that can hold n objects of type T.
         explicit ArenaSegment(size_t size) : size(size), used(0) {
             if constexpr (value_init) {
@@ -84,15 +81,12 @@ namespace crossword::memory {
         }
     };
 
-    static_assert(
-            sizeof(ArenaSegment<int>) == 3 * sizeof(void*),
-            "ArenaSegment has to be 3 pointers in size");
+    static_assert(sizeof(ArenaSegment<int>) == 3 * sizeof(void*),
+                  "ArenaSegment has to be 3 pointers in size");
 
-    template<typename T, bool value_init = true>
+    template <typename T, bool value_init = true>
     class Arena {
-
     private:
-
         const size_t min_size = 512;
         const size_t typical_size = 16384;
 
@@ -115,7 +109,6 @@ namespace crossword::memory {
         }
 
     public:
-
         /// Creates a new Arena allocator.
         Arena() : current_segment(0) {
             push_new_segment();
@@ -142,8 +135,8 @@ namespace crossword::memory {
             auto segment = &segments.at(current_segment);
 
             while (!segment->can_allocate(n)) [[unlikely]] {
-
                 ++current_segment;
+
                 if (current_segment == segments.size()) [[likely]] {
                     push_new_segment(std::max(n, typical_size));
                 }

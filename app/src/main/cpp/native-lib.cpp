@@ -1,26 +1,25 @@
+#include "dictionary.hpp"
+#include "utils/android.hpp"
+#include "utils/utf8.hpp"
+
 #include <android/asset_manager.h>
 #include <android/asset_manager_jni.h>
 #include <android/log.h>
 #include <jni.h>
 #include <memory>
 #include <string>
-#include "dictionary.hpp"
-#include "utils/android.hpp"
-#include "utils/utf8.hpp"
 
 using namespace crossword::utils;
 using crossword::Dictionary;
 using crossword::utils::android::AssetManager;
 using crossword::utils::android::AssetOpenMode;
 
-extern "C"
-JNIEXPORT jobject JNICALL
-Java_xyz_lukasz_xword_Dictionary_loadNative(JNIEnv *env,
+extern "C" JNIEXPORT jobject JNICALL
+Java_xyz_lukasz_xword_Dictionary_loadNative(JNIEnv* env,
                                             [[maybe_unused]] jobject thiz,
                                             jobject jasset_mgr,
                                             jstring path,
                                             jint par_level) {
-
     // Mmap the whole uncompressed file
     auto filename = android::string_from_java(env, path);
     auto asset_manager = AssetManager::from_java(env, jasset_mgr);
@@ -40,20 +39,18 @@ Java_xyz_lukasz_xword_Dictionary_loadNative(JNIEnv *env,
     }
 
     auto wrapper_class = env->FindClass("xyz/lukasz/xword/interop/NativeSharedPointer");
-    auto constructor_id = env->GetMethodID(wrapper_class, "<init>", "(J)V");
-    auto wrapper = env->NewObject(wrapper_class, constructor_id, reinterpret_cast<jlong>(dictionary));
+    auto ctor = env->GetMethodID(wrapper_class, "<init>", "(J)V");
+    auto wrapper = env->NewObject(wrapper_class, ctor, reinterpret_cast<jlong>(dictionary));
     return wrapper;
 }
 
-extern "C"
-JNIEXPORT jobjectArray JNICALL
-Java_xyz_lukasz_xword_Dictionary_findPartialNative(JNIEnv *env,
+extern "C" JNIEXPORT jobjectArray JNICALL
+Java_xyz_lukasz_xword_Dictionary_findPartialNative(JNIEnv* env,
                                                    [[maybe_unused]] jobject thiz,
                                                    jlong native_ptr,
                                                    jstring jword,
                                                    jstring jcursor,
                                                    jint limit) {
-
     // Marshal Java arguments to native
     auto word = android::string_from_java(env, jword);
     auto cursor = android::string_from_java(env, jcursor);
@@ -76,12 +73,10 @@ Java_xyz_lukasz_xword_Dictionary_findPartialNative(JNIEnv *env,
     return results;
 }
 
-extern "C"
-JNIEXPORT void JNICALL
-Java_xyz_lukasz_xword_interop_NativeSharedPointer_freeImpl([[maybe_unused]] JNIEnv *env,
+extern "C" JNIEXPORT void JNICALL
+Java_xyz_lukasz_xword_interop_NativeSharedPointer_freeImpl([[maybe_unused]] JNIEnv* env,
                                                            [[maybe_unused]] jclass clazz,
                                                            jlong ptr) {
-
     auto ptr_to_shared_pointer = reinterpret_cast<std::shared_ptr<void*>*>(ptr);
     delete ptr_to_shared_pointer;
 }

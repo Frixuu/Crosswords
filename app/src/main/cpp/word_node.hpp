@@ -1,27 +1,27 @@
 #ifndef CROSSWORD_HELPER_WORD_NODE_HPP
 #define CROSSWORD_HELPER_WORD_NODE_HPP
 
+#include "collections/chunked_map.hpp"
+#include "memory/arena.hpp"
+#include "utils/utf8.hpp"
+
 #include <map>
 #include <string>
-#include "collections/chunked_map.hpp"
-#include "utils/utf8.hpp"
-#include "memory/arena.hpp"
 
 namespace crossword {
 
-    using ::crossword::memory::Arena;
     using ::crossword::collections::ChunkedMap;
     using ::crossword::collections::MapChunk;
+    using ::crossword::memory::Arena;
 
     /// A node in an index representing set of strings.
     struct WordNode {
-
+    public:
         std::string* valid_word;
         ChunkedMap<uint8_t, WordNode*> children;
 
         /// Creates a new WordNode representing an invalid word.
-        WordNode() : valid_word(nullptr) {
-        }
+        WordNode() : valid_word(nullptr) {}
 
         WordNode(const WordNode&& other) = delete;
         WordNode& operator=(const WordNode& other) = delete;
@@ -44,7 +44,7 @@ namespace crossword {
                 count += 1;
             }
             if (has_children()) {
-                for (const auto &entry : children) {
+                for (const auto& entry : children) {
                     count += entry.second->calculate_size();
                 }
             }
@@ -54,7 +54,7 @@ namespace crossword {
         size_t count_nodes() noexcept {
             size_t count = 1;
             if (has_children()) {
-                for (const auto &entry : children) {
+                for (const auto& entry : children) {
                     count += entry.second->count_nodes();
                 }
             }
@@ -66,12 +66,10 @@ namespace crossword {
         /// @param index Current index depth.
         bool push_word(std::string* str,
                        size_t index,
-                       Arena<WordNode> *node_pool,
-                       Arena<MapChunk<uint8_t, WordNode*>> *chunk_pool) {
-
+                       Arena<WordNode>* node_pool,
+                       Arena<MapChunk<uint8_t, WordNode*>>* chunk_pool) {
             auto word_length = str->length();
             if (index < word_length) {
-
                 auto key = str->at(index);
                 if (utils::codepoint_is_one_byte(key)) {
                     key = utils::to_lower(key);
@@ -101,13 +99,12 @@ namespace crossword {
         /// If limit > 0, only n words will be added.
         /// If a cursor value is provided, assuming children are sorted,
         /// starts search from that cursor value (TODO).
-        void find_words(std::vector<std::string> &vec,
-                        const std::string &pattern,
+        void find_words(std::vector<std::string>& vec,
+                        const std::string& pattern,
                         size_t index,
                         int32_t point_offset,
                         int32_t limit,
-                        const std::string &cursor) {
-
+                        const std::string& cursor) {
             // The pattern matched a wildcard and parent was a multi-byte character
             if (point_offset > 0) {
                 auto offset = point_offset - 1;
@@ -134,7 +131,7 @@ namespace crossword {
             if (has_children() && index < pattern.length()) {
                 auto ch = pattern.at(index);
                 if (ch == '.') {
-                    for (const auto &entry : children) {
+                    for (const auto& entry : children) {
                         auto key = entry.first;
                         auto offset = 0;
                         if (!utils::codepoint_is_continuation(key)) {
@@ -146,22 +143,22 @@ namespace crossword {
                 } else {
                     auto result = children.find(ch);
                     if (result != children.end()) {
-                        result.get_element().second->find_words(vec, pattern, index + 1, 0, limit, cursor);
+                        auto [_key, node] = result.get_element();
+                        node->find_words(vec, pattern, index + 1, 0, limit, cursor);
                     }
+
                     auto ch_lower = utils::to_lower(ch);
-                    if (ch != ch_lower) {
-                        auto result_lower = children.find(ch_lower);
-                        if (result_lower != children.end()) {
-                            result_lower.get_element().second->find_words(vec, pattern, index + 1, 0, limit, cursor);
-                        }
+                    if (ch == ch_lower) return;
+                    auto result_lower = children.find(ch_lower);
+                    if (result_lower != children.end()) {
+                        auto [_key, node] = result_lower.get_element();
+                        node->find_words(vec, pattern, index + 1, 0, limit, cursor);
                     }
                 }
             }
         }
 
-        void merge(WordNode *other,
-                   Arena<MapChunk<uint8_t, WordNode*>> *chunk_pool) {
-
+        void merge(WordNode* other, Arena<MapChunk<uint8_t, WordNode*>>* chunk_pool) {
             if (other->valid()) {
                 valid_word = other->valid_word;
             }
@@ -186,4 +183,4 @@ namespace crossword {
     };
 }
 
-#endif //CROSSWORD_HELPER_WORD_NODE_HPP
+#endif // CROSSWORD_HELPER_WORD_NODE_HPP

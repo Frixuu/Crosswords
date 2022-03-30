@@ -1,33 +1,46 @@
 ---
 Language: Cpp
-
+BasedOnStyle: LLVM
 Standard: c++20
+
+ColumnLimit: 100
 IndentWidth: 4
+ContinuationIndentWidth: 4
 UseTab: Never
 
-BasedOnStyle: LLVM
 AccessModifierOffset: -4
-AlignAfterOpenBracket: DontAlign
-AlignOperands: DontAlign
-AlignTrailingComments: false
+IndentAccessModifiers: false
+NamespaceIndentation: All
+
+DerivePointerAlignment: false
+PointerAlignment: Left
+
+SpacesInAngles: Never
+
+AlignAfterOpenBracket: Align
+AlignTrailingComments: true
 AllowAllParametersOfDeclarationOnNextLine: false
-AllowShortFunctionsOnASingleLine: Inline
-BreakConstructorInitializers: AfterColon
-ColumnLimit:     0
+BinPackParameters: false
 ConstructorInitializerAllOnOneLineOrOnePerLine: true
-ConstructorInitializerIndentWidth: 8
-ContinuationIndentWidth: 8
-Cpp11BracedListStyle: false
-IncludeCategories:
-  - Regex:           '".*"'
-    Priority:        1
-  - Regex:           '^<.*\.h>'
-    Priority:        2
-  - Regex:           '^<.*'
-    Priority:        3
-IndentCaseLabels: true
+
+AllowShortFunctionsOnASingleLine: Empty
+AllowShortIfStatementsOnASingleLine: WithoutElse
+AllowShortLambdasOnASingleLine: Inline
+AllowShortCaseLabelsOnASingleLine: false
+
+# What goes on a separate line?
+MaxEmptyLinesToKeep: 1
+AllowAllArgumentsOnNextLine: true
+AlwaysBreakTemplateDeclarations: Yes
+AttributeMacros: ['JNIEXPORT', 'JNICALL']
+BreakBeforeBinaryOperators: All
+BreakConstructorInitializers: AfterColon
+# SeparateDefinitionBlocks: Leave <-- since v14
+
 KeepEmptyLinesAtTheStartOfBlocks: false
-SpacesInLineCommentPrefix:
-  Minimum: 0
-  Maximum: -1
+
+SortUsingDeclarations: true
+IncludeBlocks: Regroup
+
+FixNamespaceComments: false
 ...
