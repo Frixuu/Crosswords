@@ -1,0 +1,17 @@
+name: Static checks
+
+on: [push, pull_request]
+
+jobs:
+  native:
+    name: Native code
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Run clang-format
+        uses: DoozyX/clang-format-lint-action@v0.13
+        with:
+          source: '.'
+          extensions: 'cpp,hpp'
+          clangFormatVersion: 13
