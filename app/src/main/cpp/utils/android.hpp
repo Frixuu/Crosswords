@@ -10,7 +10,7 @@
 namespace crossword::utils::android {
 
     /// Copies contents of a Java string into a new std::string.
-    std::string string_from_java(JNIEnv *env, jstring jstr) {
+    std::string string_from_java(JNIEnv* env, jstring jstr) {
         if (jstr != nullptr) {
             auto char_ptr = env->GetStringUTFChars(jstr, 0);
             auto str = std::string(char_ptr);
@@ -25,6 +25,7 @@ namespace crossword::utils::android {
     class Asset final {
     private:
         AAsset* asset;
+
     public:
         Asset(AAsset* asset) : asset(asset) {}
         Asset(const Asset&) = delete;
@@ -69,9 +70,8 @@ namespace crossword::utils::android {
 
         AAssetManager* mgr;
 
-        AssetManager(JNIEnv *env, jobject assetManager)
-            : mgr(AAssetManager_fromJava(env, assetManager)) {
-        }
+        AssetManager(JNIEnv* env, jobject assetManager) :
+            mgr(AAssetManager_fromJava(env, assetManager)) {}
 
         AssetManager(const AssetManager&) = delete;
         AssetManager& operator=(const AssetManager&) = delete;
@@ -80,38 +80,48 @@ namespace crossword::utils::android {
 
     public:
 
+        /// Opens an asset.
         inline Asset open_asset(std::string& path, AssetOpenMode open_mode) {
             return Asset(AAssetManager_open(mgr, path.c_str(), open_mode));
         }
 
-        inline static AssetManager from_java(JNIEnv *env, jobject assetManager) {
+        /// Obtains a native handle to the AAssetManager.
+        inline static AssetManager from_java(JNIEnv* env, jobject assetManager) {
             return AssetManager(env, assetManager);
         }
     };
 
-    template<typename ...Args>
-    [[maybe_unused]] inline void logf(android_LogPriority priority,
-                                      const char *tag,
-                                      const char *fmt,
-                                      Args... args) {
+    namespace log {
 
-        __android_log_print(priority, tag, fmt, args...);
-    }
+        /// Logs a message with the given priority.
+        template <typename... Args>
+        inline void
+        print(android_LogPriority priority, const char* tag, const char* fmt, Args... args) {
+            __android_log_print(priority, tag, fmt, args...);
+        }
 
-    template<typename ...Args>
-    [[maybe_unused]] inline void infof(const char *tag,
-                                       const char *fmt,
-                                       Args... args) {
+        struct Logger final {
+        private:
+            /// Tag of this logger.
+            std::string tag;
 
-        logf(ANDROID_LOG_INFO, tag, fmt, args...);
-    }
+        public:
 
-    template<typename ...Args>
-    [[maybe_unused]] inline void infof(const char *fmt,
-                                       Args... args) {
+            /// Creates a new Logger instance with a provided tag.
+            Logger(std::string tag) : tag(tag) {}
 
-        infof("Native", fmt, args...);
+            /// Logs a message with the info priority.
+            template <typename... Args>
+            inline void i(const char* fmt, Args... args) {
+                print(ANDROID_LOG_INFO, tag.c_str(), fmt, args...);
+            }
+        };
+
+        /// Creates a logger with a given tag.
+        inline Logger tag(std::string tag) {
+            return Logger(tag);
+        }
     }
 }
 
-#endif //CROSSWORD_HELPER_ANDROID_HPP
+#endif // CROSSWORD_HELPER_ANDROID_HPP
