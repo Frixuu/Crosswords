@@ -35,6 +35,7 @@ AlwaysBreakTemplateDeclarations: Yes
 AttributeMacros: ['JNIEXPORT', 'JNICALL']
 BreakBeforeBinaryOperators: All
 BreakConstructorInitializers: AfterColon
+EmptyLineAfterAccessModifier: Leave
 # SeparateDefinitionBlocks: Leave <-- since v14
 
 KeepEmptyLinesAtTheStartOfBlocks: false

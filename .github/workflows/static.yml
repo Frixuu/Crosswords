@@ -4,7 +4,7 @@ on: [push, pull_request]
 
 jobs:
   native:
-    name: Native code
+    name: Formatting native code
     runs-on: ubuntu-latest
     steps:
       - name: Checkout

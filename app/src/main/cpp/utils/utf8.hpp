@@ -39,4 +39,4 @@ namespace crossword::utils {
     }
 }
 
-#endif //CROSSWORD_HELPER_UTF8_HPP
+#endif // CROSSWORD_HELPER_UTF8_HPP
