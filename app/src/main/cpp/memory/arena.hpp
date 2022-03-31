@@ -134,15 +134,23 @@ namespace crossword::memory {
         T* alloc(size_t n) {
             auto segment = &segments.at(current_segment);
 
-            while (!segment->can_allocate(n)) [[unlikely]] {
+            // If the current segment is not full, allocate
+            if (segment->can_allocate(n)) [[likely]] {
+                return segment->alloc(n);
+            }
+
+            // If it is full, move to the next segment
+            do {
                 ++current_segment;
 
+                // Unless arenas have been merged,
+                // current_segment will always be the last segment
                 if (current_segment == segments.size()) [[likely]] {
                     push_new_segment(std::max(n, typical_size));
                 }
-
                 segment = &segments.at(current_segment);
-            }
+
+            } while (!segment->can_allocate(n));
 
             return segment->alloc(n);
         }

@@ -10,6 +10,7 @@
 #include <string>
 
 using namespace crossword::utils;
+using namespace crossword::utils::android;
 using crossword::Dictionary;
 using crossword::utils::android::AssetManager;
 using crossword::utils::android::AssetOpenMode;
@@ -77,6 +78,11 @@ extern "C" JNIEXPORT void JNICALL
 Java_xyz_lukasz_xword_interop_NativeSharedPointer_freeImpl([[maybe_unused]] JNIEnv* env,
                                                            [[maybe_unused]] jclass clazz,
                                                            jlong ptr) {
-    auto ptr_to_shared_pointer = reinterpret_cast<std::shared_ptr<void*>*>(ptr);
-    delete ptr_to_shared_pointer;
+    auto ptr_to_shared = reinterpret_cast<std::shared_ptr<void*>*>(ptr);
+    if (!ptr_to_shared->unique()) {
+        auto count = ptr_to_shared->use_count();
+        log::tag("freeImpl").i("Pointer not unique, it has %d more refs", count - 1);
+    }
+
+    delete ptr_to_shared;
 }
