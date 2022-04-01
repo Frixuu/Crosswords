@@ -31,15 +31,15 @@ namespace crossword {
         /// @param buffer Pointer to the data buffer.
         /// @param start Index to start searching from.
         /// @param end Exclusive end index of buffer parsing.
-        void load_from_buffer(const char* buffer, size_t start, size_t end) {
+        void load_from_buffer(const char* buffer, const size_t start, const size_t end) {
             // Stores contents of the current line so far
             std::vector<char> line_buffer;
 
             // Cache not to lookup first parent
-            char last_first_byte = 'a';
-            auto last_ancestor
+            char prev_first_byte = 'a';
+            auto prev_ancestor
                 = forward_index->children
-                      .try_insert('a', node_arena->alloc(), index_map_chunk_arena.get())
+                      .find_or_insert('a', node_arena->alloc(), index_map_chunk_arena.get())
                       .entry.second;
 
             auto index = start;
@@ -55,22 +55,22 @@ namespace crossword {
                         // Most of the words are short enough to be inlined
                         auto word_ptr = string_arena->alloc();
                         *word_ptr = std::string(line_buffer.begin(), line_buffer.end());
-                        auto first_letter = to_lower(line_buffer[0]);
+                        auto first_byte = to_lower(line_buffer[0]);
                         line_buffer.clear();
 
                         // The input is pre-sorted, so we usually get the cached parent
-                        if (to_lower(line_buffer[0]) == last_first_byte) [[likely]] {
-                            last_ancestor->push_word(word_ptr, 1, node_arena.get(),
+                        if (first_byte == prev_first_byte) [[likely]] {
+                            prev_ancestor->push_word(word_ptr, 1, node_arena.get(),
                                                      index_map_chunk_arena.get());
                         } else {
                             // The first letter has changed,
                             // next words will use the new parent
-                            last_first_byte = first_letter;
-                            last_ancestor = forward_index->children
-                                                .try_insert(first_letter, node_arena->alloc(),
-                                                            index_map_chunk_arena.get())
+                            prev_first_byte = first_byte;
+                            prev_ancestor = forward_index->children
+                                                .find_or_insert(first_byte, node_arena->alloc(),
+                                                                index_map_chunk_arena.get())
                                                 .entry.second;
-                            last_ancestor->push_word(word_ptr, 1, node_arena.get(),
+                            prev_ancestor->push_word(word_ptr, 1, node_arena.get(),
                                                      index_map_chunk_arena.get());
                         }
                     }
@@ -132,19 +132,19 @@ namespace crossword {
         /// Puts words in this dictionary, using multiple threads.
         /// @param buffer Buffer to UTF-8 data
         /// @param length Length of the buffer
-        /// @param par_count How many threads will be spawned to parse the buffer?
-        void load_from_buffer_par(const char* buffer, int length, int par_count) {
-            std::vector<std::thread> loading_threads;
+        /// @param thread_count How many threads will be spawned to parse the buffer?
+        void load_from_buffer_par(const char* buffer, const int length, const int thread_count) {
+            std::vector<std::thread> threads;
             std::vector<std::unique_ptr<Dictionary>> result_dictionaries;
 
-            auto indices = std::make_unique<int[]>(par_count);
+            auto indices = std::make_unique<int[]>(thread_count);
             indices[0] = 0;
 
             // Split the buffer into chunks
-            for (int i = 1; i < par_count; i++) {
+            for (int i = 1; i < thread_count; i++) {
                 // Since we do not know the word length distribution,
                 // we start from the equal-sized segments
-                int candidate = i * length / par_count;
+                int candidate = i * length / thread_count;
 
                 // CR and LF cannot be in later bytes of the codepoint,
                 // so break on any of them
@@ -158,25 +158,23 @@ namespace crossword {
             }
 
             // Spawn a thread for every chunk
-            for (auto i = 0; i < par_count; i++) {
+            for (auto i = 0; i < thread_count; i++) {
                 int start = indices[i];
                 int end = length;
-                if (i < (par_count - 1)) {
+                if (i < (thread_count - 1)) {
                     end = indices[i + 1];
                 }
 
                 // Each thread gets their own dictionary,
-                // because merging them is cheaper than locking
+                // because merging them should be cheaper than locking
                 // and making other threads' caches dirty
                 auto dict = std::make_unique<Dictionary>();
-                auto thread
-                    = std::thread(&Dictionary::load_from_buffer, dict.get(), buffer, start, end);
-                loading_threads.emplace_back(std::move(thread));
-                result_dictionaries.emplace_back(std::move(dict));
+                threads.emplace_back(&Dictionary::load_from_buffer, dict.get(), buffer, start, end);
+                result_dictionaries.push_back(std::move(dict));
             }
 
             // Wait until parsing finishes
-            for (auto& thread : loading_threads) {
+            for (auto& thread : threads) {
                 thread.join();
             }
 
