@@ -110,6 +110,12 @@ namespace crossword::utils::android {
             /// Creates a new Logger instance with a provided tag.
             Logger(std::string tag) : tag(tag) {}
 
+            /// Logs a message with the warning priority.
+            template <typename... Args>
+            inline void w(const char* fmt, Args... args) {
+                print(ANDROID_LOG_WARN, tag.c_str(), fmt, args...);
+            }
+
             /// Logs a message with the info priority.
             template <typename... Args>
             inline void i(const char* fmt, Args... args) {

@@ -157,15 +157,15 @@ namespace crossword::collections {
         }
 
     public:
-        ChunkedMap() : chunks(nullptr), allocated_chunks(0), size(0) {}
+        constexpr ChunkedMap() : chunks(nullptr), allocated_chunks(0), size(0) {}
 
         /// How many elements can be stored in the map without additional allocation?
-        inline int16_t capacity() const noexcept {
+        constexpr inline int16_t capacity() noexcept {
             return allocated_chunks * 3;
         }
 
         /// Checks if the map does not contain any elements.
-        bool empty() const noexcept {
+        constexpr inline bool empty() noexcept {
             return size == 0;
         }
 
@@ -215,7 +215,7 @@ namespace crossword::collections {
             bool inserted;
         };
 
-        InsertResult try_insert(K key, V value, Arena<MapChunk<K, V>>* arena) {
+        InsertResult find_or_insert(K key, V value, Arena<MapChunk<K, V>>* arena) {
             auto it = find(key);
             if (it != end()) {
                 return {it.get_element(), false};
