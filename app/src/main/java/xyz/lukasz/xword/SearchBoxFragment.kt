@@ -8,7 +8,9 @@ import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import timber.log.Timber
 import xyz.lukasz.xword.databinding.FragmentSearchBoxBinding
+import xyz.lukasz.xword.utils.normalize
 import xyz.lukasz.xword.utils.showSnackbar
+import java.text.Normalizer.Form.NFKC
 import java.util.*
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.concurrent.thread
@@ -55,7 +57,7 @@ class SearchBoxFragment(
             return
         }
 
-        val pattern = s.toString()
+        val pattern = s.normalize(NFKC)
         val searchThread = thread(name = "Missing letter search ($pattern)", start = false) {
             val currentThread = Thread.currentThread()
             val limit = 250
