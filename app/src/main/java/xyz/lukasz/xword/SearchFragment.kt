@@ -21,7 +21,12 @@ class SearchFragment: Fragment(R.layout.fragment_search) {
         binding = FragmentSearchBinding.inflate(inflater, container, false)
         binding.recyclerView.apply {
             setHasFixedSize(true)
-            itemAnimator = DefaultItemAnimator()
+            itemAnimator = DefaultItemAnimator().apply {
+                changeDuration = 33L
+                addDuration = 33L
+                removeDuration = 33L
+                moveDuration = 33L
+            }
             adapter = SingleWordAdapter(requireActivity() as MainActivity).apply {
                 setHasStableIds(false)
                 submitList(emptyList())
