@@ -19,6 +19,8 @@
             android:ems="10"
             android:hapticFeedbackEnabled="true"
             android:hint="@string/input_box"
+            android:importantForAutofill="no"
+            android:inputType="textPassword|textNoSuggestions"
             app:endIconMode="clear_text"
             app:helperTextEnabled="false"
             app:hintEnabled="false"
