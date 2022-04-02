@@ -7,23 +7,25 @@ import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.commit
 import androidx.recyclerview.widget.DefaultItemAnimator
-import androidx.recyclerview.widget.LinearLayoutManager
 import xyz.lukasz.xword.databinding.FragmentSearchBinding
 
 class SearchFragment: Fragment(R.layout.fragment_search) {
 
-    private var binding: FragmentSearchBinding? = null
+    private lateinit var binding: FragmentSearchBinding
 
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
+    ): View {
         binding = FragmentSearchBinding.inflate(inflater, container, false)
-        binding?.recyclerView?.apply {
+        binding.recyclerView.apply {
             setHasFixedSize(true)
-            layoutManager = LinearLayoutManager(activity)
             itemAnimator = DefaultItemAnimator()
+            adapter = SingleWordAdapter(requireActivity() as MainActivity).apply {
+                setHasStableIds(false)
+                submitList(emptyList())
+            }
         }
 
         val searchBoxFragment = SearchBoxFragment(this)
@@ -31,7 +33,7 @@ class SearchFragment: Fragment(R.layout.fragment_search) {
             add(R.id.search_box_fragment_container, searchBoxFragment)
         }
 
-        return binding?.root
+        return binding.root
     }
 
     /**
@@ -40,13 +42,8 @@ class SearchFragment: Fragment(R.layout.fragment_search) {
      */
     fun updateSearchResults(results: List<String>) {
         this.requireView().post {
-            val wordAdapter = SingleWordAdapter(results, requireActivity() as MainActivity)
-            binding?.recyclerView?.adapter = wordAdapter
+            val adapter = binding.recyclerView.adapter as SingleWordAdapter
+            adapter.submitList(results)
         }
-    }
-
-    override fun onDestroyView() {
-        super.onDestroyView()
-        binding = null
     }
 }

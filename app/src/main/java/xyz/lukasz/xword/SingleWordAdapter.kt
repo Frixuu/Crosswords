@@ -2,16 +2,17 @@ package xyz.lukasz.xword
 
 import android.view.LayoutInflater
 import android.view.ViewGroup
+import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import xyz.lukasz.xword.databinding.ItemSingleWordBinding
+import xyz.lukasz.xword.utils.ObjectEqualsCallback
 
 /**
  * Binds word list to a RecyclerView.
  */
 class SingleWordAdapter(
-    private val data: List<String>,
     private val activity: MainActivity
-) : RecyclerView.Adapter<SingleWordAdapter.ViewHolder>() {
+) : ListAdapter<String, SingleWordAdapter.ViewHolder>(ObjectEqualsCallback()) {
 
     /**
      * Creates a new ViewHolder for a single word.
@@ -26,24 +27,20 @@ class SingleWordAdapter(
      * Binds a single item in the list to a ViewHolder.
      */
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-        holder.bind(data[position])
-    }
-
-    /**
-     * Returns the number of words in this adapter.
-     */
-    override fun getItemCount(): Int {
-        return data.size
+        holder.bind(getItem(position))
     }
 
     inner class ViewHolder(
         private val binding: ItemSingleWordBinding,
-        private val activity: MainActivity
+        activity: MainActivity
     ) : RecyclerView.ViewHolder(binding.root) {
+
+        init {
+            binding.activity = activity
+        }
 
         fun bind(model: String) {
             binding.word = model
-            binding.activity = activity
         }
     }
 }
