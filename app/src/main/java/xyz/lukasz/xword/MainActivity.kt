@@ -1,54 +1,31 @@
 package xyz.lukasz.xword
 
+import android.app.ActivityOptions
 import android.os.Bundle
 import android.view.View
-import android.view.inputmethod.InputMethodManager
-import androidx.appcompat.app.AppCompatActivity
-import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.commit
 import androidx.lifecycle.lifecycleScope
 import androidx.transition.Fade
 import androidx.transition.TransitionManager
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import xyz.lukasz.xword.databinding.ActivityMainBinding
+import xyz.lukasz.xword.definitions.DefineIntent
 import xyz.lukasz.xword.utils.showSnackbar
-import javax.inject.Inject
+import java.util.*
 
 @AndroidEntryPoint
-class MainActivity : AppCompatActivity() {
-
-    private lateinit var binding: ActivityMainBinding
-    @Inject lateinit var imm: InputMethodManager
+class MainActivity : ActivityBase<ActivityMainBinding>(R.layout.activity_main) {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        binding = DataBindingUtil.setContentView(this, R.layout.activity_main)
 
         val searchFragment = SearchFragment()
         supportFragmentManager.commit {
             add(binding.fragmentContainerView.id, searchFragment, "search")
         }
-
-        /*
-        val tabLayout: TabLayout = findViewById(R.id.tabLayout)
-        tabLayout.addOnTabSelectedListener(object : TabLayout.OnTabSelectedListener {
-
-            override fun onTabSelected(tab: TabLayout.Tab?) {
-                Log.i("MainActivity", "tab selected: ${tab?.text}")
-                switchIndexCategory("unused")
-            }
-
-            override fun onTabReselected(tab: TabLayout.Tab?) {
-                Log.i("MainActivity", "tab reselected: ${tab?.text}")
-            }
-
-            override fun onTabUnselected(tab: TabLayout.Tab?) {
-                Log.i("MainActivity", "tab unselected: ${tab?.text}")
-            }
-        })
-
-         */
 
         switchIndexCategory("unused")
     }
@@ -57,32 +34,15 @@ class MainActivity : AppCompatActivity() {
      * Pushes a fragment containing a word's definition.
      * @param word Model of the word to display.
      */
-    fun showWordDefinition(word: String) {
-        supportFragmentManager.commit {
-            setCustomAnimations(
-                R.anim.slide_in,
-                R.anim.fade_out,
-                R.anim.fade_in,
-                R.anim.slide_out
-            )
-            add(binding.fragmentContainerView.id, DefinitionFragment(word))
-            addToBackStack("Definition of $word")
-            setReorderingAllowed(true)
-        }
-
+    fun showWordDefinition(originView: View, textView: View, word: String) {
         hideSoftwareKeyboard()
-    }
-
-    /**
-     * If some focused element is accepting text,
-     * blurs it and hides the software keyboard.
-     */
-    private fun hideSoftwareKeyboard() {
-        if (imm.isAcceptingText) {
-            val focus = currentFocus ?: return
-            imm.hideSoftInputFromWindow(focus.windowToken, 0)
-            focus.clearFocus()
-        }
+        val locale = Dictionary.current?.locale ?: Locale("pl", "PL")
+        val intent = DefineIntent(this, word, locale)
+        val options = ActivityOptions.makeSceneTransitionAnimation(this,
+            android.util.Pair(originView, "define/enlarge_card"),
+            android.util.Pair(textView, "define/enlarge_word")
+        )
+        startActivity(intent, options.toBundle())
     }
 
     private fun switchIndexCategory(mode: String) {

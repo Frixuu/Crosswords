@@ -12,10 +12,11 @@
 
         <com.google.android.material.card.MaterialCardView
             xmlns:card_view="http://schemas.android.com/apk/res-auto"
-            android:onClick="@{(view) -> activity.showWordDefinition(word)}"
+            android:onClick="@{(view) -> activity.showWordDefinition(view, wordInList, word)}"
             android:layout_width="match_parent"
             android:layout_height="38dip"
             android:layout_margin="5dp"
+            android:transitionName="define/enlarge_card"
             card_view:cardBackgroundColor="#FEFEFE"
             card_view:cardCornerRadius="0dp"
             card_view:cardElevation="3dp">
@@ -31,6 +32,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="28dip"
                     android:text='@{word, default="..."}'
+                    android:transitionName="define/enlarge_word"
                     android:textColor="#333"
                     android:textSize="20sp" />
 
