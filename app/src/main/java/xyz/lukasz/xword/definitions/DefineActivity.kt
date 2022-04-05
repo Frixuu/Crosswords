@@ -20,8 +20,16 @@ class DefineActivity : ActivityBase<ActivityDefineBinding>(R.layout.activity_def
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
         val word = intent.getStringExtra(DefineIntent.EXTRA_WORD)!!
         val locale = intent.getSerializableExtra(DefineIntent.EXTRA_LOCALE) as Locale
+
+        setSupportActionBar(binding.toolbar)
+        val actionBar = supportActionBar!!
+        actionBar.title = resources.getString(R.string.activity_define_title, word)
+        actionBar.setDisplayHomeAsUpEnabled(true)
+        actionBar.setDisplayShowHomeEnabled(true)
+
         binding.word = word
         tryFetchDefinitionsAndUpdate(word, locale)
     }
@@ -57,5 +65,10 @@ class DefineActivity : ActivityBase<ActivityDefineBinding>(R.layout.activity_def
                     }
                 }
         }
+    }
+
+    override fun onSupportNavigateUp(): Boolean {
+        onBackPressed()
+        return true
     }
 }

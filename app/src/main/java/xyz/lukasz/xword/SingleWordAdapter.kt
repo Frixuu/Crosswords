@@ -6,6 +6,7 @@ import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import xyz.lukasz.xword.databinding.ItemSingleWordBinding
 import xyz.lukasz.xword.utils.ObjectEqualsCallback
+import java.util.*
 
 /**
  * Binds word list to a RecyclerView.
@@ -41,6 +42,7 @@ class SingleWordAdapter(
 
         fun bind(model: String) {
             binding.word = model
+            binding.locale = Dictionary.current?.locale ?: Locale("pl", "PL")
         }
     }
 }

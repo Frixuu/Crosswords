@@ -2,7 +2,6 @@ package xyz.lukasz.xword.definitions
 
 import android.content.Context
 import android.content.Intent
-import xyz.lukasz.xword.SearchIntent
 import java.text.Normalizer.Form.NFKC
 import java.text.Normalizer.normalize
 import java.util.*

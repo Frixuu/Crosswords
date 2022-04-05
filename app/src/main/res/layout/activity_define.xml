@@ -51,14 +51,18 @@
         </androidx.core.widget.NestedScrollView>
 
         <com.google.android.material.appbar.AppBarLayout
+            android:id="@+id/app_bar"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content">
+            android:layout_height="wrap_content"
+            app:theme="@style/Theme.CrosswordHelper">
 
             <androidx.appcompat.widget.Toolbar
                 android:id="@+id/toolbar"
                 android:layout_width="match_parent"
                 android:layout_height="?attr/actionBarSize"
-                android:background="?attr/colorPrimary" />
+                android:background="?attr/colorPrimary"
+                app:title="@string/activity_define_title"
+                app:titleTextColor="?attr/colorOnPrimary" />
 
         </com.google.android.material.appbar.AppBarLayout>
 

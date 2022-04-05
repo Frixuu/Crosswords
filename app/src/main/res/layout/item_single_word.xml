@@ -3,6 +3,7 @@
 
     <data>
         <variable name="word" type="java.lang.String" />
+        <variable name="locale" type="java.util.Locale" />
         <variable name="activity" type="xyz.lukasz.xword.MainActivity" />
     </data>
 
@@ -12,7 +13,7 @@
 
         <com.google.android.material.card.MaterialCardView
             xmlns:card_view="http://schemas.android.com/apk/res-auto"
-            android:onClick="@{(view) -> activity.showWordDefinition(view, wordInList, word)}"
+            android:onClick="@{(view) -> activity.showWordDefinition(view, wordInList, word, locale)}"
             android:layout_width="match_parent"
             android:layout_height="38dip"
             android:layout_margin="5dp"

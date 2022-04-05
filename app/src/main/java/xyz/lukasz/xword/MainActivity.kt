@@ -34,15 +34,13 @@ class MainActivity : ActivityBase<ActivityMainBinding>(R.layout.activity_main) {
      * Pushes a fragment containing a word's definition.
      * @param word Model of the word to display.
      */
-    fun showWordDefinition(originView: View, textView: View, word: String) {
-        hideSoftwareKeyboard()
-        val locale = Dictionary.current?.locale ?: Locale("pl", "PL")
+    fun showWordDefinition(originView: View, textView: View, word: String, locale: Locale) {
         val intent = DefineIntent(this, word, locale)
-        val options = ActivityOptions.makeSceneTransitionAnimation(this,
-            android.util.Pair(originView, "define/enlarge_card"),
-            android.util.Pair(textView, "define/enlarge_word")
-        )
-        startActivity(intent, options.toBundle())
+        val options = ActivityOptions
+            .makeSceneTransitionAnimation(this)
+            .toBundle()
+
+        startActivity(intent, options)
     }
 
     private fun switchIndexCategory(mode: String) {
