@@ -40,8 +40,8 @@ namespace crossword::utils::android {
 
         /// Gets a pointer to a buffer holding the contents of the asset.
         /// Returns nullptr on failure.
-        inline const char* get_buffer() {
-            return static_cast<const char*>(AAsset_getBuffer(asset));
+        inline const uint8_t* get_buffer() {
+            return static_cast<const uint8_t*>(AAsset_getBuffer(asset));
         }
 
         /// Reports the total size of the asset.

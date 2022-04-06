@@ -1,4 +1,4 @@
-#include "dictionary.hpp"
+#include "indexing/missing_letters.hpp"
 #include "utils/android.hpp"
 #include "utils/utf8.hpp"
 
@@ -11,7 +11,7 @@
 
 using namespace crossword::utils;
 using namespace crossword::utils::android;
-using crossword::Dictionary;
+using crossword::indexing::MissingLettersIndex;
 using crossword::utils::android::AssetManager;
 using crossword::utils::android::AssetOpenMode;
 
@@ -20,7 +20,7 @@ Java_xyz_lukasz_xword_Dictionary_loadNative(JNIEnv* env,
                                             [[maybe_unused]] jobject thiz,
                                             jobject jasset_mgr,
                                             jstring path,
-                                            jint par_level) {
+                                            jint thread_count) {
     // Mmap the whole uncompressed file
     auto filename = android::string_from_java(env, path);
     auto asset_manager = AssetManager::from_java(env, jasset_mgr);
@@ -29,19 +29,19 @@ Java_xyz_lukasz_xword_Dictionary_loadNative(JNIEnv* env,
     off_t start = 0;
     off_t length = asset.length();
 
-    std::shared_ptr<Dictionary>* dictionary = nullptr;
+    std::shared_ptr<MissingLettersIndex>* index = nullptr;
     auto fd = asset.open_file_descriptor(&start, &length);
     if (fd >= 0) {
         auto buffer = asset.get_buffer();
         if (buffer != nullptr) {
-            dictionary = new std::shared_ptr<Dictionary>(new Dictionary());
-            dictionary->get()->load_from_buffer_par(buffer, static_cast<int>(length), par_level);
+            index = new std::shared_ptr<MissingLettersIndex>(new MissingLettersIndex());
+            index->get()->load_from_buffer_par(buffer, static_cast<int>(length), thread_count);
         }
     }
 
     auto wrapper_class = env->FindClass("xyz/lukasz/xword/interop/NativeSharedPointer");
     auto ctor = env->GetMethodID(wrapper_class, "<init>", "(J)V");
-    auto wrapper = env->NewObject(wrapper_class, ctor, reinterpret_cast<jlong>(dictionary));
+    auto wrapper = env->NewObject(wrapper_class, ctor, reinterpret_cast<jlong>(index));
     return wrapper;
 }
 
@@ -55,11 +55,10 @@ Java_xyz_lukasz_xword_Dictionary_findPartialNative(JNIEnv* env,
     // Marshal Java arguments to native
     auto word = android::string_from_java(env, jword);
     auto cursor = android::string_from_java(env, jcursor);
-    auto dictionary = *reinterpret_cast<std::shared_ptr<Dictionary>*>(native_ptr);
+    auto index = *reinterpret_cast<std::shared_ptr<MissingLettersIndex>*>(native_ptr);
 
     // Find all the matching words
-    std::vector<std::string> result_vec;
-    dictionary->find_words(result_vec, word, limit, cursor);
+    auto result_vec = index->lookup(word, limit);
 
     // Map found words to a Java string array
     auto string_clazz = env->FindClass("java/lang/String");

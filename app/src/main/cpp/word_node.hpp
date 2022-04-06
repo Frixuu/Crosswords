@@ -26,10 +26,8 @@ namespace crossword {
         /// Creates a new WordNode representing an invalid word.
         constexpr WordNode() : valid_word(nullptr) {}
 
-        WordNode(const WordNode&& other) = delete;
+        WordNode(const WordNode& other) = delete;
         WordNode& operator=(const WordNode& other) = delete;
-        WordNode(WordNode&& other) = delete;
-        WordNode& operator=(WordNode&& other) = delete;
 
         /// Determines whether this node represents a valid word.
         /// This only makes sense in context of a particular tree index.
@@ -118,13 +116,12 @@ namespace crossword {
                         const std::string& pattern,
                         const size_t index,
                         const int32_t point_offset,
-                        const int32_t limit,
-                        const std::string& cursor) {
+                        const int32_t limit) {
             // The pattern matched a wildcard and parent was a multi-byte character
             if (point_offset > 0) {
                 for (const auto& [_key, child] : children) {
                     // The wildcard is a single character, do not increment index
-                    child->find_words(vec, pattern, index, point_offset - 1, limit, cursor);
+                    child->find_words(vec, pattern, index, point_offset - 1, limit);
                 }
                 return;
             }
@@ -162,7 +159,7 @@ namespace crossword {
                     if (!utils::codepoint_is_continuation(key))
                         offset = utils::codepoint_size(key) - 1;
 
-                    child->find_words(vec, pattern, index + 1, offset, limit, cursor);
+                    child->find_words(vec, pattern, index + 1, offset, limit);
                 }
                 return;
             }
@@ -170,7 +167,7 @@ namespace crossword {
             auto result = children.find(ch);
             if (result != children.end()) {
                 auto [_key, child] = result.get_element();
-                child->find_words(vec, pattern, index + 1, 0, limit, cursor);
+                child->find_words(vec, pattern, index + 1, 0, limit);
             }
 
             auto ch_lower = utils::to_lower(ch);
@@ -181,7 +178,7 @@ namespace crossword {
             auto result_lower = children.find(ch_lower);
             if (result_lower != children.end()) {
                 auto [_key, child] = result_lower.get_element();
-                child->find_words(vec, pattern, index + 1, 0, limit, cursor);
+                child->find_words(vec, pattern, index + 1, 0, limit);
             }
         }
 

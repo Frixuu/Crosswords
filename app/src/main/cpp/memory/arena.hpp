@@ -122,6 +122,9 @@ namespace crossword::memory {
                 push_existing_segment(std::move(*it));
                 ++it;
             }
+
+            other->segments.clear();
+            other->current_segment = 0;
         }
 
         /// Allocates a single object.
