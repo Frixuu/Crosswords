@@ -42,9 +42,16 @@
                 app:tabMode="scrollable">
 
                 <com.google.android.material.tabs.TabItem
+                    android:id="@+id/tab_missing_letters"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="@string/tab_missing_letters" />
+                    android:text="@string/mode_missing_letters" />
+
+                <com.google.android.material.tabs.TabItem
+                    android:id="@+id/tab_anagrams"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/mode_anagrams" />
 
             </com.google.android.material.tabs.TabLayout>
 

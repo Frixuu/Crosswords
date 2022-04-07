@@ -5,16 +5,20 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.commit
-import androidx.recyclerview.widget.DefaultItemAnimator
 import com.google.android.material.tabs.TabLayout
+import dagger.hilt.android.AndroidEntryPoint
 import timber.log.Timber
 import xyz.lukasz.xword.databinding.FragmentSearchBinding
+import xyz.lukasz.xword.search.SearchResultsViewModel
 import xyz.lukasz.xword.utils.Animators
 
-class SearchFragment: Fragment(R.layout.fragment_search) {
+@AndroidEntryPoint
+class SearchFragment : Fragment(R.layout.fragment_search) {
 
     private lateinit var binding: FragmentSearchBinding
+    private val searchResultsViewModel: SearchResultsViewModel by activityViewModels()
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -28,10 +32,13 @@ class SearchFragment: Fragment(R.layout.fragment_search) {
             adapter = SingleWordAdapter(requireActivity() as MainActivity).apply {
                 setHasStableIds(false)
                 submitList(emptyList())
+                searchResultsViewModel.results.observe(viewLifecycleOwner) {
+                    submitList(it)
+                }
             }
         }
 
-        val searchBoxFragment = SearchBoxFragment(this)
+        val searchBoxFragment = SearchBoxFragment()
         activity?.supportFragmentManager?.commit {
             add(R.id.search_box_fragment_container, searchBoxFragment)
         }

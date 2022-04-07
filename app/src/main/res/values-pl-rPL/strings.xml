@@ -4,9 +4,9 @@
     <string name="input_box">Wpisz szukany wyraz bądź jego część</string>
     <string name="input_query">Szukaj</string>
     <string name="search_showing_only">Wyświetlam tylko %d pierwszych wyników</string>
-    <string name="tab_missing_letters">Brak. litery</string>
-    <string name="tab_rhymes">Rymy</string>
-    <string name="tab_anagrams">Anagramy</string>
+    <string name="mode_missing_letters">Brak. litery</string>
+    <string name="mode_rhymes">Rymy</string>
+    <string name="mode_anagrams">Anagramy</string>
     <string name="operation_cancelled">Operacja w toku została przerwana</string>
     <string name="operation_failed">Operacja w toku zakończyła się niepowodzeniem</string>
     <string name="misc_three_dots">…</string>

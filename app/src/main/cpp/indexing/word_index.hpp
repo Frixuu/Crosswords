@@ -29,7 +29,7 @@ namespace crossword::indexing {
         /// @param input The word to look up.
         /// @param max_results The maximum number of results to return.
         virtual std::vector<std::string> lookup(const std::string& input,
-                                                const size_t max_results) const noexcept = 0;
+                                                const size_t max_results) const = 0;
     };
 }
 

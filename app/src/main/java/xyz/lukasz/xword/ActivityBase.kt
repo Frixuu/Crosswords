@@ -19,7 +19,7 @@ abstract class ActivityBase<TBinding : ViewDataBinding>(@LayoutRes val layout: I
     /**
      * Generated data binding object.
      */
-    protected open lateinit var binding: TBinding
+    open lateinit var binding: TBinding
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

@@ -68,7 +68,7 @@ namespace crossword::indexing {
         /// @param input The pattern to match.
         /// @param max_results The maximum number of results to return.
         virtual std::vector<std::string> lookup(const std::string& input,
-                                                const size_t max_results) const noexcept override {
+                                                const size_t max_results) const override {
             std::vector<std::string> results;
             root->find_words(results, input, 0, 0, max_results);
             return results;

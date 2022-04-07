@@ -3,6 +3,7 @@ package xyz.lukasz.xword
 import android.app.ActivityOptions
 import android.os.Bundle
 import android.view.View
+import androidx.activity.viewModels
 import androidx.fragment.app.commit
 import androidx.lifecycle.lifecycleScope
 import androidx.transition.Fade
@@ -13,14 +14,25 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import xyz.lukasz.xword.databinding.ActivityMainBinding
 import xyz.lukasz.xword.definitions.DefineIntent
+import xyz.lukasz.xword.search.SearchResultsViewModel
 import xyz.lukasz.xword.utils.showSnackbar
 import java.util.*
 
 @AndroidEntryPoint
 class MainActivity : ActivityBase<ActivityMainBinding>(R.layout.activity_main) {
 
+    private val resultsViewModel: SearchResultsViewModel by viewModels()
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        resultsViewModel.results.observe(this) {
+            val maxResults = SearchResultsViewModel.MAX_RESULTS
+            if (it.size >= maxResults) {
+                val message = resources.getString(R.string.search_showing_only, it.size)
+                binding.mainLayout.showSnackbar(message)
+            }
+        }
 
         val searchFragment = SearchFragment()
         supportFragmentManager.commit {
@@ -59,6 +71,7 @@ class MainActivity : ActivityBase<ActivityMainBinding>(R.layout.activity_main) {
             lifecycleScope.launch(Dispatchers.IO) {
                 dict.loadFromAsset(this@MainActivity)
                 Dictionary.current = dict
+                resultsViewModel.setIndex(dict)
             }.invokeOnCompletion { cause ->
                 runOnUiThread {
                     // Fade the overlay out
