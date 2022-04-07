@@ -3,6 +3,11 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools">
 
+    <data>
+        <import type="xyz.lukasz.xword.search.SearchResultsViewModel" />
+        <variable name="viewModel" type="SearchResultsViewModel" />
+    </data>
+
     <androidx.appcompat.widget.LinearLayoutCompat
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -39,6 +44,7 @@
                 android:imeOptions="actionDone"
                 android:inputType="text"
                 android:paddingTop="12dp"
+                android:text="@={viewModel.query}"
                 tools:ignore="SpeakableTextPresentCheck" />
 
         </com.google.android.material.textfield.TextInputLayout>

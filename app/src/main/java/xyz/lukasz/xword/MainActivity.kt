@@ -71,7 +71,7 @@ class MainActivity : ActivityBase<ActivityMainBinding>(R.layout.activity_main) {
             lifecycleScope.launch(Dispatchers.IO) {
                 dict.loadFromAsset(this@MainActivity)
                 Dictionary.current = dict
-                resultsViewModel.setIndex(dict)
+                resultsViewModel.index.postValue(dict)
             }.invokeOnCompletion { cause ->
                 runOnUiThread {
                     // Fade the overlay out

@@ -26,6 +26,7 @@ class SearchFragment : Fragment(R.layout.fragment_search) {
         savedInstanceState: Bundle?
     ): View {
         binding = FragmentSearchBinding.inflate(inflater, container, false)
+        binding.lifecycleOwner = this
         binding.recyclerView.apply {
             setHasFixedSize(true)
             itemAnimator = Animators.defaultWithDuration(33L)
