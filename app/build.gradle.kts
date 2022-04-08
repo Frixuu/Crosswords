@@ -79,6 +79,7 @@ dependencies {
     implementation("com.google.android.material:material:1.5.0")
     implementation("androidx.constraintlayout:constraintlayout:2.1.3")
     implementation("androidx.fragment:fragment-ktx:1.4.1")
+    implementation("androidx.slidingpanelayout:slidingpanelayout:1.2.0")
     implementation("net.danlew:android.joda:2.10.14")
     implementation("androidx.legacy:legacy-support-v4:1.0.0")
     implementation("org.jsoup:jsoup:1.14.3")
