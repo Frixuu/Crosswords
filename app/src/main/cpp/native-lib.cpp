@@ -26,7 +26,7 @@ Java_xyz_lukasz_xword_search_MissingLettersIndex_loadNative(JNIEnv* env,
                                                             jstring path,
                                                             jint thread_count) {
     // Mmap the whole uncompressed file
-    auto filename = android::string_from_java(env, path);
+    auto filename = interop::copy_utf8_string(env, path);
     auto asset_manager = AssetManager::from_java(env, jasset_mgr);
     auto asset = asset_manager.open_asset(filename, AssetOpenMode::Buffer);
 
@@ -51,7 +51,6 @@ Java_xyz_lukasz_xword_search_WordIndex_lookupNative(JNIEnv* env,
                                                     jlong native_ptr,
                                                     jstring jquery,
                                                     jint maxResults) {
-
     // Marshal Java arguments to native
     auto query = interop::copy_utf8_string(env, jquery);
     auto index = interop::unwrap_shared_ptr<WordIndex>(native_ptr);
@@ -71,7 +70,6 @@ Java_xyz_lukasz_xword_search_WordIndex_lookupNative(JNIEnv* env,
     }
 
     return results;
-
 }
 
 extern "C" JNIEXPORT void JNICALL

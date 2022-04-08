@@ -9,18 +9,6 @@
 
 namespace crossword::utils::android {
 
-    /// Copies contents of a Java string into a new std::string.
-    std::string string_from_java(JNIEnv* env, jstring jstr) {
-        if (jstr != nullptr) {
-            auto char_ptr = env->GetStringUTFChars(jstr, 0);
-            auto str = std::string(char_ptr);
-            env->ReleaseStringUTFChars(jstr, char_ptr);
-            return str;
-        } else {
-            return std::string();
-        }
-    }
-
     /// Provides access to a read-only Android asset.
     class Asset final {
     private:
@@ -81,8 +69,9 @@ namespace crossword::utils::android {
     public:
 
         /// Opens an asset.
-        inline Asset open_asset(std::string& path, AssetOpenMode open_mode) {
-            return Asset(AAssetManager_open(mgr, path.c_str(), open_mode));
+        inline Asset open_asset(std::u8string& path, AssetOpenMode open_mode) {
+            auto filename_cstr = reinterpret_cast<const char*>(path.c_str());
+            return Asset(AAssetManager_open(mgr, filename_cstr, open_mode));
         }
 
         /// Obtains a native handle to the AAssetManager.

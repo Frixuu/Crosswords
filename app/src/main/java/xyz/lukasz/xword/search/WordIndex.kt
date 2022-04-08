@@ -1,6 +1,7 @@
 package xyz.lukasz.xword.search
 
 import android.content.res.AssetManager
+import org.jetbrains.annotations.Contract
 import xyz.lukasz.xword.interop.NativeSharedPointer
 import java.text.Collator
 import java.text.Normalizer
@@ -36,6 +37,7 @@ abstract class WordIndex(
      */
     abstract fun loadFromAsset(assetManager: AssetManager, assetPath: String)
 
+    @Contract("_ -> new", pure = true)
     fun lookup(query: String, maxResults: Int): MutableList<String> {
         return if (ready) {
             val queryStr = Normalizer.normalize(query.lowercase(locale), Normalizer.Form.NFKC)
