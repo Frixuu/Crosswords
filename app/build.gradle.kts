@@ -82,6 +82,7 @@ dependencies {
     implementation("net.danlew:android.joda:2.10.14")
     implementation("androidx.legacy:legacy-support-v4:1.0.0")
     implementation("org.jsoup:jsoup:1.14.3")
+    implementation("com.squareup.okhttp3:okhttp:4.9.3")
     implementation("com.jakewharton.timber:timber:5.0.1")
     implementation("androidx.navigation:navigation-fragment-ktx:${libs.versions.navigation.get()}")
     implementation("androidx.navigation:navigation-ui-ktx:${libs.versions.navigation.get()}")
