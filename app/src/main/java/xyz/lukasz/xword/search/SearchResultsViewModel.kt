@@ -6,7 +6,6 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import timber.log.Timber
-import xyz.lukasz.xword.Dictionary
 import java.text.Normalizer
 import java.util.*
 import javax.inject.Inject
@@ -19,7 +18,7 @@ class SearchResultsViewModel @Inject constructor(
     private val _results = MutableLiveData<List<String>>()
     val results: LiveData<List<String>> get() = _results
 
-    val index = MutableLiveData<Dictionary?>(null)
+    val index = MutableLiveData<MissingLettersIndex?>(null)
 
     val query = MutableLiveData("")
 
@@ -51,7 +50,7 @@ class SearchResultsViewModel @Inject constructor(
     }
 
     @AnyThread
-    private fun searchAndUpdateResults(index: Dictionary, query: String, maxResults: Int) {
+    private fun searchAndUpdateResults(index: MissingLettersIndex, query: String, maxResults: Int) {
         val input = Normalizer.normalize(query, Normalizer.Form.NFKC)
         viewModelScope.launch(Dispatchers.IO) {
             val queryResults = index.findPartial(input, null, maxResults)

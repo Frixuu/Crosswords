@@ -83,8 +83,8 @@ dependencies {
     implementation("androidx.legacy:legacy-support-v4:1.0.0")
     implementation("org.jsoup:jsoup:1.14.3")
     implementation("com.jakewharton.timber:timber:5.0.1")
-    implementation("androidx.navigation:navigation-fragment-ktx:2.3.5")
-    implementation("androidx.navigation:navigation-ui-ktx:2.3.5")
+    implementation("androidx.navigation:navigation-fragment-ktx:${libs.versions.navigation.get()}")
+    implementation("androidx.navigation:navigation-ui-ktx:${libs.versions.navigation.get()}")
 
     kapt("com.google.dagger:hilt-compiler:${libs.versions.hilt.get()}")
 

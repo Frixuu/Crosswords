@@ -5,6 +5,7 @@ import android.view.ViewGroup
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import xyz.lukasz.xword.databinding.ItemSingleWordBinding
+import xyz.lukasz.xword.search.MissingLettersIndex
 import xyz.lukasz.xword.utils.ObjectEqualsCallback
 import java.util.*
 
@@ -42,7 +43,7 @@ class SingleWordAdapter(
 
         fun bind(model: String) {
             binding.word = model
-            binding.locale = Dictionary.current?.locale ?: Locale("pl", "PL")
+            binding.locale = MissingLettersIndex.current?.locale ?: Locale("pl", "PL")
         }
     }
 }

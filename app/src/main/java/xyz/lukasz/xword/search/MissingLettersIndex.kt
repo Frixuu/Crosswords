@@ -1,62 +1,35 @@
-package xyz.lukasz.xword
+package xyz.lukasz.xword.search
 
-import android.app.Activity
+import android.content.Context
 import android.content.res.AssetManager
 import xyz.lukasz.xword.interop.NativeSharedPointer
-import java.text.Collator
+import java.text.Normalizer
 import java.util.*
 
 /**
- * A Dictionary is a wrapper for indices that allow for quick word lookup.
+ * MissingLettersIndex is an index that provides lookup of words,
+ * where the matched pattern can have some of its letters missing.
  */
-class Dictionary(private val lang: String, private val country: String) {
-
-    /**
-     * Represents information about this dictionary's language.
-     */
-    val locale: Locale = Locale(lang, country)
-
-    /**
-     * Collator for this dictionary's locale.
-     * Used for string comparisons.
-     */
-    val collator: Collator = Collator.getInstance(locale)
-
-    /**
-     * A pointer to a native Dictionary object.
-     */
-    private var pointer = NativeSharedPointer.nil()
-
-    /**
-     * Returns true if the internal pointer
-     * points to a valid native Dictionary object.
-     */
-    val ready: Boolean get() = !pointer.nil
+class MissingLettersIndex(lang: String, country: String)
+    : WordIndex(Locale(lang, country)) {
 
     /**
      * Attempts to load an internal asset
      * associated with this Dictionary's locale.
      */
-    fun loadFromAsset(activity: Activity) {
-        loadFromAsset(activity.assets)
-    }
-
-    /**
-     * Attempts to load an internal asset
-     * associated with this Dictionary's locale.
-     */
-    fun loadFromAsset(assetManager: AssetManager) {
-        loadFromAsset(assetManager, "dictionaries/${lang}_${country}/words.txt")
+    fun loadFromAsset(context: Context) {
+        val path = "dictionaries/${locale.language}_${locale.country}/words.txt"
+        loadFromAsset(context.assets, path)
     }
 
     /**
      * Attempts to load an internal asset under a specified path.
      */
-    fun loadFromAsset(assetManager: AssetManager, filename: String) {
-        pointer.setPointer(0L)
+    override fun loadFromAsset(assetManager: AssetManager, assetPath: String) {
+        unload()
         val threadCount = Runtime.getRuntime().availableProcessors()
-        pointer = loadNative(assetManager, filename, threadCount)
-        if (pointer.nil) {
+        nativeIndex = loadNative(assetManager, assetPath, threadCount)
+        if (nativeIndex.nil) {
             throw Exception("Native loading failed")
         }
     }
@@ -68,7 +41,8 @@ class Dictionary(private val lang: String, private val country: String) {
      */
     fun findPartial(pattern: String, cursor: String? = null, limit: Int = -1): Array<String> {
         return if (ready) {
-            findPartialNative(pointer.getPointer(), pattern.lowercase(), cursor, limit)
+            val query = Normalizer.normalize(pattern.lowercase(locale), Normalizer.Form.NFKC)
+            findPartialNative(nativeIndex.getPointer(), query, cursor, limit)
         } else {
             emptyArray()
         }
@@ -97,6 +71,6 @@ class Dictionary(private val lang: String, private val country: String) {
     ): Array<String>
 
     companion object {
-        var current: Dictionary? = null
+        var current: MissingLettersIndex? = null
     }
 }

@@ -16,11 +16,11 @@ using crossword::utils::android::AssetManager;
 using crossword::utils::android::AssetOpenMode;
 
 extern "C" JNIEXPORT jobject JNICALL
-Java_xyz_lukasz_xword_Dictionary_loadNative(JNIEnv* env,
-                                            [[maybe_unused]] jobject thiz,
-                                            jobject jasset_mgr,
-                                            jstring path,
-                                            jint thread_count) {
+Java_xyz_lukasz_xword_search_MissingLettersIndex_loadNative(JNIEnv* env,
+                                                            [[maybe_unused]] jobject thiz,
+                                                            jobject jasset_mgr,
+                                                            jstring path,
+                                                            jint thread_count) {
     // Mmap the whole uncompressed file
     auto filename = android::string_from_java(env, path);
     auto asset_manager = AssetManager::from_java(env, jasset_mgr);
@@ -46,12 +46,12 @@ Java_xyz_lukasz_xword_Dictionary_loadNative(JNIEnv* env,
 }
 
 extern "C" JNIEXPORT jobjectArray JNICALL
-Java_xyz_lukasz_xword_Dictionary_findPartialNative(JNIEnv* env,
-                                                   [[maybe_unused]] jobject thiz,
-                                                   jlong native_ptr,
-                                                   jstring jword,
-                                                   jstring jcursor,
-                                                   jint limit) {
+Java_xyz_lukasz_xword_search_MissingLettersIndex_findPartialNative(JNIEnv* env,
+                                                                   [[maybe_unused]] jobject thiz,
+                                                                   jlong native_ptr,
+                                                                   jstring jword,
+                                                                   jstring jcursor,
+                                                                   jint limit) {
     // Marshal Java arguments to native
     auto word = android::string_from_java(env, jword);
     auto cursor = android::string_from_java(env, jcursor);

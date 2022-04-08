@@ -14,6 +14,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import xyz.lukasz.xword.databinding.ActivityMainBinding
 import xyz.lukasz.xword.definitions.DefineIntent
+import xyz.lukasz.xword.search.MissingLettersIndex
 import xyz.lukasz.xword.search.SearchResultsViewModel
 import xyz.lukasz.xword.utils.showSnackbar
 import java.util.*
@@ -67,10 +68,10 @@ class MainActivity : ActivityBase<ActivityMainBinding>(R.layout.activity_main) {
             TransitionManager.beginDelayedTransition(binding.mainLayout, fade)
             binding.loadingFrameLayout.visibility = View.VISIBLE
 
-            val dict = Dictionary.current ?: Dictionary("pl", "PL")
+            val dict = MissingLettersIndex.current ?: MissingLettersIndex("pl", "PL")
             lifecycleScope.launch(Dispatchers.IO) {
                 dict.loadFromAsset(this@MainActivity)
-                Dictionary.current = dict
+                MissingLettersIndex.current = dict
                 resultsViewModel.index.postValue(dict)
             }.invokeOnCompletion { cause ->
                 runOnUiThread {
