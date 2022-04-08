@@ -20,7 +20,7 @@ namespace crossword {
     /// A node in an index representing set of strings.
     struct WordNode {
     public:
-        std::string* valid_word;
+        std::u8string* valid_word;
         ChunkedMap<uint8_t, WordNode*> children;
 
         /// Creates a new WordNode representing an invalid word.
@@ -66,7 +66,7 @@ namespace crossword {
         /// Pushes a word deep down the index.
         /// @param str Word being pushed into the index.
         /// @param index Current index depth.
-        bool push_word(std::string* str,
+        bool push_word(std::u8string* str,
                        const size_t index,
                        Arena<WordNode>* node_arena,
                        Arena<MapChunk<uint8_t, WordNode*>>* chunk_arena) {
@@ -112,8 +112,8 @@ namespace crossword {
         /// If limit > 0, only n words will be added.
         /// If a cursor value is provided, assuming children are sorted,
         /// starts search from that cursor value (TODO).
-        void find_words(std::vector<std::string>& vec,
-                        const std::string& pattern,
+        void find_words(std::vector<std::u8string>& vec,
+                        const std::u8string& pattern,
                         const size_t index,
                         const int32_t point_offset,
                         const int32_t limit) {

@@ -24,11 +24,11 @@ namespace crossword::indexing {
         std::unique_ptr<WordNode> root;
         std::unique_ptr<Arena<WordNode>> arena_node;
         std::unique_ptr<Arena<MapChunk<uint8_t, WordNode*>>> arena_map_chunk;
-        std::unique_ptr<Arena<std::string, false>> arena_string;
+        std::unique_ptr<Arena<std::u8string, false>> arena_string;
 
         /// Adds the word to the index.
         /// @details It is assumed that the word pointer belongs to this indexes' arena_string.
-        inline void add(std::string* word_ptr) {
+        inline void add(std::u8string* word_ptr) {
             root->push_word(word_ptr, 0, arena_node.get(), arena_map_chunk.get());
         }
 
@@ -38,7 +38,7 @@ namespace crossword::indexing {
             root(std::make_unique<WordNode>()),
             arena_node(std::make_unique<Arena<WordNode>>()),
             arena_map_chunk(std::make_unique<Arena<MapChunk<uint8_t, WordNode*>>>()),
-            arena_string(std::make_unique<Arena<std::string, false>>()) {}
+            arena_string(std::make_unique<Arena<std::u8string, false>>()) {}
 
         ~MissingLettersIndex() = default;
 
@@ -67,9 +67,9 @@ namespace crossword::indexing {
         /// @result The set of words that match the pattern.
         /// @param input The pattern to match.
         /// @param max_results The maximum number of results to return.
-        virtual std::vector<std::string> lookup(const std::string& input,
-                                                const size_t max_results) const override {
-            std::vector<std::string> results;
+        virtual std::vector<std::u8string> lookup(const std::u8string& input,
+                                                  const size_t max_results) const override {
+            std::vector<std::u8string> results;
             root->find_words(results, input, 0, 0, max_results);
             return results;
         }
@@ -97,7 +97,7 @@ namespace crossword::indexing {
                     if (!line_buffer.empty()) [[likely]] {
                         // Most of the words are short enough to be inlined
                         auto word_ptr = arena_string->alloc();
-                        *word_ptr = std::string(line_buffer.begin(), line_buffer.end());
+                        *word_ptr = std::u8string(line_buffer.begin(), line_buffer.end());
                         line_buffer.clear();
                         add(word_ptr);
                     }
@@ -108,7 +108,7 @@ namespace crossword::indexing {
             // push the remaining chars
             if (!line_buffer.empty()) {
                 auto word_ptr = arena_string->alloc();
-                *word_ptr = std::string(line_buffer.begin(), line_buffer.end());
+                *word_ptr = std::u8string(line_buffer.begin(), line_buffer.end());
                 add(word_ptr);
             }
         }

@@ -51,12 +51,11 @@ class SearchResultsViewModel @Inject constructor(
 
     @AnyThread
     private fun searchAndUpdateResults(index: MissingLettersIndex, query: String, maxResults: Int) {
-        val input = Normalizer.normalize(query, Normalizer.Form.NFKC)
         viewModelScope.launch(Dispatchers.IO) {
-            val queryResults = index.findPartial(input, null, maxResults)
-            Timber.i("Found %d results for pattern \"%s\"", queryResults.size, input)
-            Arrays.sort(queryResults, index.collator)
-            _results.postValue(queryResults.asList())
+            val queryResults = index.lookup(query, maxResults)
+            Timber.i("Found %d results for pattern \"%s\"", queryResults.size, query)
+            queryResults.sortWith(index.collator)
+            _results.postValue(queryResults)
         }
     }
 

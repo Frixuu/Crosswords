@@ -35,20 +35,6 @@ class MissingLettersIndex(lang: String, country: String)
     }
 
     /**
-     * Finds all matching a provided pattern.
-     * For example, a pattern ".ró." would match "drób", "próg" and "król".
-     * @param limit How many strings can be returned at most, a negative value means all of them.
-     */
-    fun findPartial(pattern: String, cursor: String? = null, limit: Int = -1): Array<String> {
-        return if (ready) {
-            val query = Normalizer.normalize(pattern.lowercase(locale), Normalizer.Form.NFKC)
-            findPartialNative(nativeIndex.getPointer(), query, cursor, limit)
-        } else {
-            emptyArray()
-        }
-    }
-
-    /**
      * A native method that attempts to load and index a native Dictionary
      * and returns a pointer to that object
      * or null, if the operation failed.
@@ -58,17 +44,6 @@ class MissingLettersIndex(lang: String, country: String)
         filename: String,
         concLevel: Int
     ): NativeSharedPointer
-
-    /**
-     * A native method that traverses a native Dictionary indices
-     * and returns an array of words that match a specified pattern.
-     */
-    private external fun findPartialNative(
-        nativePtr: Long,
-        pattern: String,
-        cursor: String?,
-        limit: Int
-    ): Array<String>
 
     companion object {
         var current: MissingLettersIndex? = null

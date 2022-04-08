@@ -31,8 +31,8 @@ namespace crossword::indexing {
         /// @returns Anagrams of the given word.
         /// @param input Word to find anagrams of.
         /// @param max_results Maximum number of results to return.
-        virtual std::vector<std::string> lookup(const std::string& input,
-                                                const size_t max_results) const override {
+        virtual std::vector<std::u8string> lookup(const std::u8string& input,
+                                                  const size_t max_results) const override {
             return {"TODO"};
         }
     };

@@ -28,8 +28,8 @@ namespace crossword::indexing {
         /// @returns A vector of matching words.
         /// @param input The word to look up.
         /// @param max_results The maximum number of results to return.
-        virtual std::vector<std::string> lookup(const std::string& input,
-                                                const size_t max_results) const = 0;
+        virtual std::vector<std::u8string> lookup(const std::u8string& input,
+                                                  const size_t max_results) const = 0;
     };
 }
 
