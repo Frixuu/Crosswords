@@ -12,6 +12,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import timber.log.Timber
 import xyz.lukasz.xword.databinding.FragmentSearchBinding
 import xyz.lukasz.xword.search.SearchResultsViewModel
+import xyz.lukasz.xword.search.WordIndexType
 import xyz.lukasz.xword.utils.Animators
 
 @AndroidEntryPoint
@@ -49,6 +50,9 @@ class SearchFragment : Fragment(R.layout.fragment_search) {
 
             override fun onTabSelected(tab: TabLayout.Tab?) {
                 Timber.i("Tab selected: %s", tab?.text ?: "null")
+                val position = tab?.position ?: return
+                val mode = arrayOf(WordIndexType.MISSING_LETTERS).getOrNull(position) ?: return
+                searchResultsViewModel.switchIndexCategory(resources.assets, mode)
             }
 
             override fun onTabReselected(tab: TabLayout.Tab?) {

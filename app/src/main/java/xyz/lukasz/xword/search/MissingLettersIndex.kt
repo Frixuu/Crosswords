@@ -10,23 +10,14 @@ import java.util.*
  * MissingLettersIndex is an index that provides lookup of words,
  * where the matched pattern can have some of its letters missing.
  */
-class MissingLettersIndex(lang: String, country: String)
-    : WordIndex(Locale(lang, country)) {
-
-    /**
-     * Attempts to load an internal asset
-     * associated with this Dictionary's locale.
-     */
-    fun loadFromAsset(context: Context) {
-        val path = "dictionaries/${locale.language}_${locale.country}/words.txt"
-        loadFromAsset(context.assets, path)
-    }
+class MissingLettersIndex(locale: Locale) : WordIndex(locale) {
 
     /**
      * Attempts to load an internal asset under a specified path.
      */
-    override fun loadFromAsset(assetManager: AssetManager, assetPath: String) {
+    override fun loadFromAsset(assetManager: AssetManager) {
         unload()
+        val assetPath = resolveAssetPath()
         val threadCount = Runtime.getRuntime().availableProcessors()
         nativeIndex = loadNative(assetManager, assetPath, threadCount)
         if (nativeIndex.nil) {

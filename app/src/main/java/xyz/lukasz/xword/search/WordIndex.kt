@@ -35,7 +35,11 @@ abstract class WordIndex(
     /**
      * Loads contents of this index from a raw asset file.
      */
-    abstract fun loadFromAsset(assetManager: AssetManager, assetPath: String)
+    abstract fun loadFromAsset(assetManager: AssetManager)
+
+    protected fun resolveAssetPath(): String {
+        return "dictionaries/${locale.language}_${locale.country}/words.txt"
+    }
 
     @Contract("_ -> new", pure = true)
     fun lookup(query: String, maxResults: Int): MutableList<String> {

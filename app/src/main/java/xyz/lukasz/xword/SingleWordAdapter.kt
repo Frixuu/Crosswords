@@ -2,10 +2,12 @@ package xyz.lukasz.xword
 
 import android.view.LayoutInflater
 import android.view.ViewGroup
+import androidx.activity.viewModels
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import xyz.lukasz.xword.databinding.ItemSingleWordBinding
 import xyz.lukasz.xword.search.MissingLettersIndex
+import xyz.lukasz.xword.search.SearchResultsViewModel
 import xyz.lukasz.xword.utils.ObjectEqualsCallback
 import java.util.*
 
@@ -43,7 +45,8 @@ class SingleWordAdapter(
 
         fun bind(model: String) {
             binding.word = model
-            binding.locale = MissingLettersIndex.current?.locale ?: Locale("pl", "PL")
+            val viewModel = activity.viewModels<SearchResultsViewModel>().value
+            binding.locale = viewModel.index.value?.locale ?: Locale.getDefault()
         }
     }
 }

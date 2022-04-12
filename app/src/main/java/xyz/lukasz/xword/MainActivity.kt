@@ -16,6 +16,8 @@ import xyz.lukasz.xword.databinding.ActivityMainBinding
 import xyz.lukasz.xword.definitions.DefineIntent
 import xyz.lukasz.xword.search.MissingLettersIndex
 import xyz.lukasz.xword.search.SearchResultsViewModel
+import xyz.lukasz.xword.search.WordIndexFactory
+import xyz.lukasz.xword.search.WordIndexType
 import xyz.lukasz.xword.utils.showSnackbar
 import java.util.*
 
@@ -26,6 +28,19 @@ class MainActivity : ActivityBase<ActivityMainBinding>(R.layout.activity_main) {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        resultsViewModel.index.observe(this) {
+            // Animate the overlay
+            TransitionManager.beginDelayedTransition(binding.mainLayout, Fade().apply {
+                duration = 150; addTarget(binding.loadingFrameLayout)
+            })
+
+            if (it == null) {
+                binding.loadingFrameLayout.visibility = View.VISIBLE
+            } else {
+                binding.loadingFrameLayout.visibility = View.GONE
+            }
+        }
 
         resultsViewModel.results.observe(this) {
             val maxResults = SearchResultsViewModel.MAX_RESULTS
@@ -40,7 +55,7 @@ class MainActivity : ActivityBase<ActivityMainBinding>(R.layout.activity_main) {
             add(binding.fragmentContainerView.id, searchFragment, "search")
         }
 
-        switchIndexCategory("unused")
+        resultsViewModel.switchIndexCategory(this.assets, WordIndexType.MISSING_LETTERS)
     }
 
     /**
@@ -54,40 +69,5 @@ class MainActivity : ActivityBase<ActivityMainBinding>(R.layout.activity_main) {
             .toBundle()
 
         startActivity(intent, options)
-    }
-
-    private fun switchIndexCategory(mode: String) {
-        runOnUiThread {
-
-            val fade = Fade().apply {
-                duration = 150
-                addTarget(binding.loadingFrameLayout)
-            }
-
-            // Fade the overlay in
-            TransitionManager.beginDelayedTransition(binding.mainLayout, fade)
-            binding.loadingFrameLayout.visibility = View.VISIBLE
-
-            val dict = MissingLettersIndex.current ?: MissingLettersIndex("pl", "PL")
-            lifecycleScope.launch(Dispatchers.IO) {
-                dict.loadFromAsset(this@MainActivity)
-                MissingLettersIndex.current = dict
-                resultsViewModel.index.postValue(dict)
-            }.invokeOnCompletion { cause ->
-                runOnUiThread {
-                    // Fade the overlay out
-                    TransitionManager.beginDelayedTransition(binding.mainLayout, fade)
-                    binding.loadingFrameLayout.visibility = View.GONE
-
-                    // If the job has been aborted, notify the user
-                    val layout = binding.mainLayout
-                    when (cause) {
-                        null -> { }
-                        is CancellationException -> layout.showSnackbar(R.string.operation_cancelled)
-                        else -> layout.showSnackbar(R.string.operation_failed)
-                    }
-                }
-            }
-        }
     }
 }
