@@ -51,7 +51,10 @@ class SearchFragment : Fragment(R.layout.fragment_search) {
             override fun onTabSelected(tab: TabLayout.Tab?) {
                 Timber.i("Tab selected: %s", tab?.text ?: "null")
                 val position = tab?.position ?: return
-                val mode = arrayOf(WordIndexType.MISSING_LETTERS).getOrNull(position) ?: return
+                val mode = arrayOf(
+                    WordIndexType.MISSING_LETTERS,
+                    WordIndexType.ANAGRAMS
+                ).getOrNull(position) ?: return
                 searchResultsViewModel.switchIndexCategory(resources.assets, mode)
             }
 

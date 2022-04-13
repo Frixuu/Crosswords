@@ -1,5 +1,6 @@
 package xyz.lukasz.xword.search
 
 enum class WordIndexType {
-    MISSING_LETTERS;
+    MISSING_LETTERS,
+    ANAGRAMS;
 }

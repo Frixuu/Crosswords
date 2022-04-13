@@ -1,3 +1,4 @@
+#include "indexing/anagrams.hpp"
 #include "indexing/missing_letters.hpp"
 #include "indexing/word_index.hpp"
 #include "interop/pointer_wrapper.hpp"
@@ -14,6 +15,7 @@
 
 using namespace crossword::utils;
 using namespace crossword::utils::android;
+using crossword::indexing::AnagramIndex;
 using crossword::indexing::MissingLettersIndex;
 using crossword::indexing::WordIndex;
 using crossword::utils::android::AssetManager;
@@ -38,7 +40,33 @@ Java_xyz_lukasz_xword_search_MissingLettersIndex_loadNative(JNIEnv* env,
     if (fd >= 0) {
         auto buffer = asset.get_buffer();
         if (buffer != nullptr) {
-            index->load_from_buffer_par(buffer, static_cast<int>(length), thread_count);
+            index->load_from_buffer_parallel(buffer, static_cast<int>(length), thread_count);
+        }
+    }
+
+    return interop::wrap_shared_ptr(env, std::move(index));
+}
+
+extern "C" JNIEXPORT jobject JNICALL
+Java_xyz_lukasz_xword_search_AnagramIndex_loadNative(JNIEnv* env,
+                                                     [[maybe_unused]] jobject thiz,
+                                                     jobject jasset_mgr,
+                                                     jstring path,
+                                                     jint thread_count) {
+    // Mmap the whole uncompressed file
+    auto filename = interop::copy_utf8_string(env, path);
+    auto asset_manager = AssetManager::from_java(env, jasset_mgr);
+    auto asset = asset_manager.open_asset(filename, AssetOpenMode::Buffer);
+
+    off_t start = 0;
+    off_t length = asset.length();
+
+    auto index = std::make_shared<AnagramIndex>();
+    auto fd = asset.open_file_descriptor(&start, &length);
+    if (fd >= 0) {
+        auto buffer = asset.get_buffer();
+        if (buffer != nullptr) {
+            index->load_from_buffer_parallel(buffer, static_cast<int>(length), thread_count);
         }
     }
 

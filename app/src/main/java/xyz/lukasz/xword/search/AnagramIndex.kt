@@ -4,11 +4,7 @@ import android.content.res.AssetManager
 import xyz.lukasz.xword.interop.NativeSharedPointer
 import java.util.*
 
-/**
- * MissingLettersIndex is an index that provides lookup of words,
- * where the matched pattern can have some of its letters missing.
- */
-class MissingLettersIndex(locale: Locale) : WordIndex(locale) {
+class AnagramIndex(locale: Locale) : WordIndex(locale) {
 
     /**
      * Attempts to load an internal asset under a specified path.

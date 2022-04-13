@@ -13,6 +13,7 @@ object WordIndexFactory {
         val locale = getLocale()
         return when (type) {
             WordIndexType.MISSING_LETTERS -> MissingLettersIndex(locale)
+            WordIndexType.ANAGRAMS -> AnagramIndex(locale)
             else -> throw IllegalArgumentException("Unknown category name: $type")
         }
     }

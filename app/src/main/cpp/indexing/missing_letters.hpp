@@ -117,7 +117,7 @@ namespace crossword::indexing {
         /// @param buffer Buffer to UTF-8 data
         /// @param length Length of the buffer
         /// @param factor How many threads will be spawned to parse the buffer?
-        void load_from_buffer_par(const uint8_t* buffer, const int length, const int factor) {
+        void load_from_buffer_parallel(const uint8_t* buffer, const int length, const int factor) {
             auto thread_count = std::clamp(factor, 1, 32);
             std::vector<std::thread> threads;
             std::vector<std::unique_ptr<MissingLettersIndex>> result_dictionaries;
