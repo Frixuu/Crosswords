@@ -1,8 +1,8 @@
 #ifndef CROSSWORD_HELPER_ANAGRAMS_HPP
 #define CROSSWORD_HELPER_ANAGRAMS_HPP
 
-#include "word_index.hpp"
 #include "../utils/android.hpp"
+#include "word_index.hpp"
 
 #include <thread>
 
@@ -44,16 +44,15 @@ namespace crossword::indexing {
         /// @param buffer Pointer to the data buffer.
         /// @param start Index to start searching from.
         /// @param end Exclusive end index of buffer parsing.
-        virtual void load_from_buffer(const uint8_t* buffer,
-                                      const size_t start,
-                                      const size_t end) override {
+        virtual void
+        load_from_buffer(const uint8_t* buffer, const size_t start, const size_t end) override {
             // TODO: implement
         }
 
         virtual void load_from_buffer_parallel(const uint8_t* buffer,
                                                const int length,
-                                               const int factor) override {
-            load_from_buffer_parallel_impl<AnagramIndex>(buffer, length, factor);
+                                               const int parallel_factor) override {
+            load_from_buffer_parallel_impl<AnagramIndex>(buffer, length, parallel_factor);
         }
     };
 }

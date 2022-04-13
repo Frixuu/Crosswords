@@ -30,8 +30,14 @@ AllowShortCaseLabelsOnASingleLine: false
 
 # What goes on a separate line?
 MaxEmptyLinesToKeep: 1
-AllowAllArgumentsOnNextLine: true
 AlwaysBreakTemplateDeclarations: Yes
+
+AllowAllArgumentsOnNextLine: true
+AlwaysBreakAfterReturnType: None
+AlwaysBreakAfterDefinitionReturnType: None
+PenaltyReturnTypeOnItsOwnLine: 50
+BinPackParameters: false
+
 AttributeMacros: ['JNIEXPORT', 'JNICALL']
 BreakBeforeBinaryOperators: All
 BreakConstructorInitializers: AfterColon

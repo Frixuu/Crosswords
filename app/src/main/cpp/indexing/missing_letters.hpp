@@ -78,9 +78,8 @@ namespace crossword::indexing {
         /// @param buffer Pointer to the data buffer.
         /// @param start Index to start searching from.
         /// @param end Exclusive end index of buffer parsing.
-        virtual void load_from_buffer(const uint8_t* buffer,
-                                      const size_t start,
-                                      const size_t end) override {
+        virtual void
+        load_from_buffer(const uint8_t* buffer, const size_t start, const size_t end) override {
             // Stores contents of the current line so far
             std::vector<uint8_t> line_buffer;
             line_buffer.reserve(128);
@@ -117,8 +116,8 @@ namespace crossword::indexing {
 
         virtual void load_from_buffer_parallel(const uint8_t* buffer,
                                                const int length,
-                                               const int factor) override {
-            load_from_buffer_parallel_impl<MissingLettersIndex>(buffer, length, factor);
+                                               const int parallel_factor) override {
+            load_from_buffer_parallel_impl<MissingLettersIndex>(buffer, length, parallel_factor);
         }
     };
 }
