@@ -1,6 +1,7 @@
 package xyz.lukasz.xword.search
 
 import android.content.res.AssetManager
+import timber.log.Timber
 import xyz.lukasz.xword.interop.NativeSharedPointer
 import java.util.*
 
@@ -15,6 +16,7 @@ class MissingLettersIndex(locale: Locale) : WordIndex(locale) {
      */
     override fun loadFromAsset(assetManager: AssetManager) {
         unload()
+        Timber.w(helloWorld())
         val assetPath = resolveAssetPath()
         val threadCount = Runtime.getRuntime().availableProcessors()
         nativeIndex = loadNative(assetManager, assetPath, threadCount)
@@ -30,4 +32,6 @@ class MissingLettersIndex(locale: Locale) : WordIndex(locale) {
      */
     private external fun loadNative(assetManager: AssetManager, filename: String, threads: Int)
         : NativeSharedPointer
+
+    private external fun helloWorld(): String
 }

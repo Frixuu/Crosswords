@@ -1,8 +1,11 @@
+import com.nishtahir.CargoBuildTask
+
 plugins {
     id("com.android.application")
     kotlin("android")
     kotlin("kapt")
     id("dagger.hilt.android.plugin")
+    id("org.mozilla.rust-android-gradle.rust-android")
 }
 
 android {
@@ -70,13 +73,19 @@ android {
     }
 }
 
+cargo {
+    module = "src/main/rust"
+    libname = "crossword"
+    targets = listOf("arm", "arm64", "x86_64")
+}
+
 dependencies {
 
-    implementation("org.jetbrains.kotlin:kotlin-stdlib:${libs.versions.kotlin.get()}")
+    implementation(libs.kotlin.stdlib)
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.6.4")
 
-    implementation("com.google.dagger:hilt-android:${libs.versions.hilt.get()}")
-    kapt("com.google.dagger:hilt-compiler:${libs.versions.hilt.get()}")
+    implementation(libs.hilt.android)
+    kapt(libs.hilt.compiler)
 
     implementation("androidx.core:core-ktx:1.12.0")
     implementation("androidx.appcompat:appcompat:1.6.1")
@@ -101,4 +110,8 @@ dependencies {
 
 kapt {
     correctErrorTypes = true
+}
+
+tasks.preBuild.configure {
+    dependsOn.add(tasks.withType(CargoBuildTask::class.java))
 }

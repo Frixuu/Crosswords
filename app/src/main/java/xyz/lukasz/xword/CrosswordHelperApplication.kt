@@ -15,6 +15,7 @@ class CrosswordHelperApplication : Application() {
     companion object {
         init {
             System.loadLibrary("native-lib")
+            System.loadLibrary("crossword")
         }
     }
 }
