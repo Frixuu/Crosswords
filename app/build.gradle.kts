@@ -72,11 +72,11 @@ android {
 
 dependencies {
 
-    implementation("org.jetbrains.kotlin:kotlin-stdlib:${libs.versions.kotlin.get()}")
+    implementation(libs.kotlin.stdlib)
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.6.4")
 
-    implementation("com.google.dagger:hilt-android:${libs.versions.hilt.get()}")
-    kapt("com.google.dagger:hilt-compiler:${libs.versions.hilt.get()}")
+    implementation(libs.hilt.android)
+    kapt(libs.hilt.compiler)
 
     implementation("androidx.core:core-ktx:1.12.0")
     implementation("androidx.appcompat:appcompat:1.6.1")
@@ -91,8 +91,8 @@ dependencies {
     implementation("com.squareup.okhttp3:okhttp:4.9.3")
     implementation("com.jakewharton.timber:timber:5.0.1")
     implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:${libs.versions.lifecycleViewmodel.get()}")
-    implementation("androidx.navigation:navigation-fragment-ktx:${libs.versions.navigation.get()}")
-    implementation("androidx.navigation:navigation-ui-ktx:${libs.versions.navigation.get()}")
+    implementation(libs.navigation.fragment.ktx)
+    implementation(libs.navigation.ui.ktx)
 
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.1.5")

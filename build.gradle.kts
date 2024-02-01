@@ -1,14 +1,7 @@
 buildscript {
-
-    repositories {
-        google()
-        mavenCentral()
-    }
-
     dependencies {
-        classpath("com.android.tools.build:gradle:8.1.2")
+        classpath("com.android.tools.build:gradle:8.2.1")
         classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:${libs.versions.kotlin.get()}")
-        classpath("com.google.dagger:hilt-android-gradle-plugin:${libs.versions.hilt.get()}")
     }
 }
 
@@ -17,6 +10,10 @@ allprojects {
         google()
         mavenCentral()
     }
+}
+
+plugins {
+    id("com.google.dagger.hilt.android").version(libs.versions.hilt.get()).apply(false)
 }
 
 tasks.register<Delete>("clean") {
